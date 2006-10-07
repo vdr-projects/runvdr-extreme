@@ -1,0 +1,118 @@
+        
+                       runvdr extreme
+
+
+Written by:               Udo Richter <udo_richter(a)gmx.de>
+Project's homepage:       http://www.richter-udo.de/vdr/scripts.en.html#runvdr
+See the file COPYING for license information.
+
+
+
+About
+--------------------------------------------------------------------------
+runvdr extreme is a runvdr script, just like the runvdr script included in
+the VDR distribution. Its just roughly 17 times bigger.
+
+Some of the features of runvdr extreme:
+
+- Loads default configuration from runvdr.conf
+- All configuration accessible and overrideable from command line
+- All VDR options handled
+- Handles runvdr.pid file, acts on signals
+- Restarts VDR in case of errors
+- Commands to restart VDR and reload DVB
+- Configuration file re-read on VDR restart
+- Avoids endless loops if VDR crashes instantly
+- Resets terminal to defaults after VDR terminated
+- Add wrapper commands to VDR for debugging
+- Waiting for the VDR process to be killed completey,
+  hard killing after timeout
+- Command line help
+- Can switch console terminal
+- Can set locale for VDR daemon
+- Optionally supports pluginsetup-plugin
+
+
+
+Quick-start
+--------------------------------------------------------------------------
+- Copy runvdr to /usr/local/bin/ or whereever you like
+- Copy runvdr.conf.example to /etc/runvdr.conf
+- Edit /etc/runvdr.conf to match your needs
+
+The runvdr.conf is pretty much self-explaining. All options are also available
+on command line, just take a look at runvdr --help.
+
+
+
+Dependencies
+--------------------------------------------------------------------------
+Unix commands, that runvdr uses:
+
+Command       Debian packet
+ pgrep         procps
+ ps            procps
+ kill          procps
+ sleep         coreutils
+ date          coreutils
+ chvt          console-tools
+ getopt        util-linux
+ setterm       util-linux
+
+
+
+Examples
+--------------------------------------------------------------------------
+Assuming you've set up your defaults in /etc/runvdr.conf, here are some
+cool things you can do now:
+
+
+Start VDR in background (for example with TERMINAL=/dev/tty8 in conf file):
+
+  runvdr &
+
+Stop VDR and the runvdr script:
+
+  runvdr --terminate
+
+Dito, but wait until VDR is killed:
+
+  runvdr --terminate --wait
+
+Restart the already running VDR process because it is hanging, or because
+the runvdr.conf has changed:
+
+  runvdr --restart
+
+Dito, but also reload the DVB drivers:
+
+  runvdr --dvb-restart
+
+Use the new fresh compiled VDR for the first time:
+
+  runvdr --vdr=/usr/src/vdr-1.4.3/vdr --lib=/usr/src/vdr-1.4.3/PLUGINS/lib
+
+For debugging, start VDR with no terminal redirection:
+
+  runvdr --terminal="" --switchterminal=""
+
+Load all plugins and also the hello plugin:
+
+  runvdr -P hello
+
+Load only the hello plugin:
+
+  runvdr -P- -P hello
+
+Do a dry-run of runvdr:
+
+  runvdr --wrapper=echo
+  
+Do a debugging session:
+
+  runvdr --wrapper="gdb --args"
+  
+Start with a completely different setup:
+
+  runvdr --runvdr-conf="/etc/runvdr-debugging.conf"
+

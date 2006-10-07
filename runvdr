@@ -1,0 +1,705 @@
+#!/bin/bash
+#  
+#  runvdr extreme
+#
+#  configurable vdr launcher script
+#
+#      by Udo Richter <udo_richter(a)gmx.de>
+#      http://www.richter-udo.de/vdr/scripts.html#runvdr
+#
+
+RUNVDRCONF=/etc/runvdr.conf
+
+
+# Some unix commands being used:
+
+PGREP="pgrep"
+PS="ps"
+GETOPT="getopt"
+KILL="kill"
+SLEEP="sleep"
+CHVT="chvt"
+DATE="date"
+SETTERM="setterm"
+
+# Options summary and conf file entries of runvdr:
+#
+# -C # --runvdr-conf=#   RUNVDRCONF       location of runvdr config file
+# --                     ADDPARAM         Additional parameters to pass to VDR
+# --pluginsetup-conf=#   PLUGINSETUPCONF  location of plugin-setup-runvdr.conf
+# --vdr=#                VDRPRG           location and name of the vdr binary
+# --switchterminal=#     SWITCHTERMINAL   console terminal to switch to
+# --runvdr-pid=#         RUNVDRPID        location of runvdr.pid file
+# --dvb-load=#           DVBLOAD          command to load DVB drivers
+# --dvb-unload=#         DVBUNLOAD        command to unload DVB drivers
+# --wrapper=#            WRAPPER          wrapper command for calling vdr
+# --terminate[=#]        TERMINATE        Terminate runvdr by pid
+# --wait[=#]             WAIT             Wait # seconds for --terminate to finish
+# --restart[=#]          RESTART          Send restart signal by pid
+# --dvb-restart[=#]      DVBRESTART       Send dvb-restart signal by pid
+# --term-timeout=#       TERMTIMEOUT      Timeout for VDR to react on SIGTERM
+# --kill-timeout=#       KILLTIMEOUT      Timeout for VDR to react on SIGKILL
+# --language=#           LANGUAGE         Locale to set for VDR
+# -V --version           VERSION          print version information and exit
+# -h --help              HELP             print this help and exit
+#
+# Supported options of VDR 
+#                     
+#  -a #  --audio #    AUDIO            send Dolby Digital audio to stdin of command #
+#  -c #  --config #   CONFIGDIR        read config files from DIR
+#  -d    --daemon     DAEMON           run in daemon mode
+#  -D #  --device #   DVBDEVICE        use only the given DVB device (NUM = 0, 1, 2...)
+#  -E #  --epgfile #  EPGFILE          write the EPG data into the given FILE. - to disable.
+#  -g #  --grab #     GRAB             write images from the SVDRP command GRAB into the given DIR;
+#  -L #  --lib #      LIBDIR           search for plugins in DIR (default is %s)
+#        --lirc #?    LIRC             use a LIRC remote control device, attached to PATH
+#  -l #  --log #      LOGLEVEL         set log level (default: 3)
+#  -m    --mute       MUTE             mute audio of the primary DVB device at startup
+#        --no-kbd     NOKBD            don't use the keyboard as an input device
+#  -P #  --plugin #   PLUGINS          load a plugin defined by the given options
+#  -p #  --port #     SVDRPPORT        use PORT for SVDRP 
+#        --rcu #?     RCU              use a remote control device, attached to PATH
+#  -r #  --record #   RECORDCMD        call CMD before and after a recording
+#  -s #  --shutdown # SHUTDOWN         call CMD to shutdown the computer
+#  -t #  --terminal # TERMINAL         controlling tty
+#  -u #  --user #     USER             run as user USER; only applicable if started as root
+#  -v    --vfat       VFAT             encode special characters in recording names
+#  -v #  --video #    VIDEODIR         use DIR as video directory
+#  -w #  --watchdog # WATCHDOG         activate the watchdog timer with a timeout of SEC
+
+
+which $PGREP     >- || { echo missing $PGREP... >2 ;   exit 1 ; }
+which $PS        >- || { echo missing $PS... >2 ;      exit 1 ; }
+which $GETOPT    >- || { echo missing $GETOPT... >2 ;  exit 1 ; }
+which $KILL      >- || { echo missing $KILL... >2 ;    exit 1 ; }
+which $SLEEP     >- || { echo missing $SLEEP... >2 ;   exit 1 ; }
+which $CHVT      >- || { echo missing $CHVT... >2 ;    exit 1 ; }
+which $DATE      >- || { echo missing $DATE... >2 ;    exit 1 ; }
+which $SETTERM   >- || { echo missing $SETTERM... >2 ; exit 1 ; }
+
+
+
+function ParseCommandLine_Step1() {
+    # Parse command line, step 1
+    # Stores pre-processed options in $OPTIONS
+    # evaluates -C and --runvdr-conf only
+
+    SHORTOPT="a:c:C:dD:E:g:hl:L:mp:P:r:s:t:u:v:Vw:"
+    LONGOPT="runvdr-conf:,pluginsetup-conf:,vdr:,switchterminal:,\
+        runvdr-pid:,dvb-load:,dvb-unload:,language:,wrapper:,\
+        term-timeout:,kill-timeout:,terminate::,restart::,dvb-restart::,\
+        wait::,audio:,config:,daemon,device:,epgfile:,grab:,help,lib:,lirc::,\
+        log:,mute,no-kbd,plugin:,port:,rcu::,record:,shutdown:,\
+        terminal:,user:,version,vfat,video:,watchdog:"
+    
+
+    # prepare all optios for later processing
+    OPTIONS=`$GETOPT -o "$SHORTOPT" --long "$LONGOPT" -n "$0" -- "$@"` || exit 1
+        
+    # evaluate only -C and --runvdr-conf
+    EARLYOPTIONS=`$GETOPT -q -o "C:" --long "runvdr-conf:" -n "$0" -- "$@"` 
+    
+    eval set -- "$EARLYOPTIONS"
+    
+    while true ; do case "$1" in
+        -C|--runvdr-conf)
+            RUNVDRCONF="$2"
+            shift 2
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "Internal error!" >2
+            exit 1
+            ;;
+    esac ; done
+}
+
+function Clean() {
+    # Clean all config variables
+    ADDPARAM=
+    PLUGINSETUPCONF=
+    VDRPRG=
+    SWITCHTERMINAL=
+    RUNVDRPID=
+    DVBLOAD=
+    DVBUNLOAD=
+    LANGUAGE=
+    WRAPPER=
+    TERMTIMEOUT=
+    KILLTIMEOUT=
+    TERMINATE=
+    RESTART=
+    DVBRESTART=
+    WAIT=0
+    HELP=
+    VERSION=
+
+    AUDIO=
+    CONFIGDIR=
+    DAEMON=
+    DVBDEVICE=()
+    EPGFILE=
+    GRAB=
+    LIBDIR=
+    LIRC=
+    LOGLEVEL=
+    MUTE=
+    NOKBD=
+    PLUGINS=()
+    SVDRPPORT=
+    RECORDCMD=
+    RCU=
+    SHUTDOWN=
+    TERMINAL=
+    VDRUSER=
+    VFAT=
+    VIDEODIR=
+    WATCHDOG=
+}
+
+
+# Helper functions
+function AddPluginString() {
+    # add $1 as plugin
+    if [ "$1" == "-" ] ; then
+        PLUGINS=()
+    else
+        PLUGINS[${#PLUGINS[*]}]="$*"
+    fi
+}
+function AddPlugin() {
+    # add $* as plugin, do shell quoting
+
+    local plugin=""
+    while [ $# -gt 0 ] ; do
+        # regexp magic
+        # quote '\' to '\\'
+        local par="$1"
+        par="${par//'\'/\\\\}"
+        # work around bash bug: double quoted '\'
+        par="${par//'\\'/\\\\}"
+        # quote '"' to '\"'
+        par="${par//\"/\\\"}"
+        # check if this splits into words
+        local -a arr=($par)
+        # if yes, wrap in quotes
+        [ ${#arr[*]} -ne 1 ] && par="\"$par\""
+        # add to plugin string      
+        if [ -n "$plugin" ] ; then plugin="$plugin $par" ; else plugin="$par" ; fi
+        # next, please
+        shift
+    done
+    AddPluginString "$plugin"
+}
+function AddDevice() {
+    if [ "$1" == "-" ] ; then
+        DVBDEVICE=()
+    else
+        DVBDEVICE[${#DVBDEVICE[*]}]="$*";
+    fi
+}
+
+
+function LoadConfFile() {
+
+    # Load configuration file
+    
+    if [ -r $RUNVDRCONF ] ; then
+        . $RUNVDRCONF || exit 1
+    else
+        echo "runvdr: $RUNVDRCONF not found." >&2
+    fi
+
+    # Transform some defaults, so empty parameters can have a 
+    # non-default meaning
+    [ -z "$LIRC" ] && LIRC=0
+    [ -z "$RCU"  ] && RCU=0
+    [ -z "$TERMINATE" ] && TERMINATE=0
+    [ -z "$RESTART" ] && RESTART=0
+    [ -z "$DVBRESTART" ] && DVBRESTART=0
+
+    return 0
+}
+
+
+function ParseCommandLine_Step2() {
+    # Parse command line, step 2
+    # Process all options in $OPTIONS, override
+    # all options that are set by now
+    
+    eval set -- "$OPTIONS"
+    
+    while true ; do case "$1" in
+        -C|--runvdr-conf)                    shift 2;;
+           --pluginsetup-conf) PLUGINSETUPCONF="$2"; shift 2;;
+           --vdr)          VDRPRG="$2";      shift 2;;
+           --switchterminal) SWITCHTERMINAL="$2"; shift 2;;
+           --runvdr-pid)   RUNVDRPID="$2";   shift 2;;
+           --dvb-load)     DVBLOAD="$2";     shift 2;;
+           --dvb-unload)   DVBUNLOAD="$2";   shift 2;;
+           --language)     LANGUAGE="$2";    shift 2;;
+           --wrapper)      WRAPPER="$2";     shift 2;;
+           --term-timeout) TERMTIMEOUT="$2"; shift 2;;
+           --kill-timeout) KILLTIMEOUT="$2"; shift 2;;
+           --terminate)    TERMINATE="$2";   shift 2;;
+           --wait)         WAIT="$2";        shift 2;;
+           --restart)      RESTART="$2";     shift 2;;
+           --dvb-restart)  DVBRESTART="$2";  shift 2;;
+        -h|--help)         HELP=1;           shift  ;;
+        -V|--version)      VERSION=1;        shift  ;;
+
+        
+        -a|--audio)        AUDIO="$2";     shift 2;;
+        -c|--config)       CONFIGDIR="$2"; shift 2;;
+        -d|--daemon)       DAEMON=1;       shift  ;;
+        -D|--device)       AddDevice "$2"; shift 2;;
+        -E|--epgfile)      EPGFILE="$2";   shift 2;;
+        -g|--grab)         GRAB="1";       shift  ;;
+        -l|--log)          LOGLEVEL="$2";  shift 2;;
+        -L|--lib)          LIBDIR="$2";    shift 2;;
+           --lirc)         LIRC="$2";      shift 2;;
+        -m|--mute)         MUTE=1;         shift  ;;
+           --no-kbd)       NOKBD=1;        shift  ;;
+        -p|--port)         SVDRPPORT="$2"; shift 2;;
+        -P|--plugin)       AddPluginString "$2"; shift 2;;
+           --rcu)          RCU="$2";       shift 2;;
+        -r|--record)       RECORDCMD="$2"; shift 2;;
+        -s|--shutdown)     SHUTDOWN="$2";  shift 2;;
+        -t|--terminal)     TERMINAL="$2";  shift 2;;
+        -u|--user)         USER="$2";      shift 2;;
+        -v|--video)        VIDEODIR="$2";  shift 2;;
+           --vfat)         VFAT=1;         shift  ;;
+        -w|--watchdog)     WATCHDOG="$2";  shift 2;;
+
+            
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "Internal error!" >2
+            exit 1
+            ;;
+    esac ; done
+    
+    # Add all remaining options directly to additional params
+    
+    if [ -n "$1" ] ; then
+        [ -n "$ADDPARAM" ] && ADDPARAM="$ADDPARAM "
+        ADDPARAM="$ADDPARAM$@"
+    fi
+    
+    return 0
+}
+
+
+
+function OnlineHelp() {
+    cat <<END-OF-HELP
+Usage: $0 [OPTIONS] 
+
+runvdr Options:
+-C #, --runvdr-conf=# location of runvdr config file
+--pluginsetup-conf=#  location of plugin-setup-runvdr.conf
+--vdr=#               location and name of the vdr binary
+--switchterminal=#    console terminal number to switch to
+--runvdr-pid=#        location of runvdr.pid file
+--dvb-load=#          command to load DVB drivers
+--dvb-unload=#        command to unload DVB drivers
+--wrapper=#           wrapper command for calling vdr
+--language=#          Locale to set for VDR
+--terminate[=#]       Terminate runvdr by pid
+--wait[=#]            Wait # seconds for --terminate to finish
+--restart[=#]         Send restart signal by pid
+--dvb-restart[=#]     Send dvb-restart signal by pid
+--term-timeout=#      Timeout for VDR to react on SIGTERM
+--kill-timeout=#      Timeout for VDR to react on SIGKILL
+
+-V, --version         print version information and exit
+-h, --help            print this help and exit
+
+Parsed VDR options:
+-a # --audio=#    send Dolby Digital audio to stdin of command CMD
+-c # --config=#   read config files from DIR
+-d   --daemon     run in daemon mode
+-D # --device=#   use only the given DVB device (NUM = 0, 1, 2...)
+                  Use '-' to override devices from config file
+-E # --epgfile=#  write the EPG data into the given FILE. - to disable.
+-g # --grab=#     write images from the SVDRP command GRAB into the given DIR
+-L # --lib=#      search for plugins in DIR
+     --lirc[=#]   use a LIRC remote control device, attached to PATH
+-l # --log=#      set log level
+-m   --mute       mute audio of the primary DVB device at startup
+     --no-kbd     don't use the keyboard as an input device
+-P # --plugin=#   load a plugin defined by the given options
+                  Use '-' to ignore plugins from config file
+-p # --port=#     use PORT for SVDRP
+     --rcu[=#]    use a remote control device, attached to PATH
+-r # --record=#   call CMD before and after a recording
+-s # --shutdown=# call CMD to shutdown the computer
+-t # --terminal=# controlling tty
+-u # --user=#     run as user USER; only applicable if started as root
+     --vfat       encode special characters in recording names
+-v # --video=#    use DIR as video directory
+-w # --watchdog=# activate the watchdog timer with a timeout of SEC
+
+All runvdr parameters after '--' will be passed to VDR without modification
+END-OF-HELP
+}
+
+function BuildCommand() {
+    # Based on all options, build command line in $VDRCMD
+
+    # complete command with path
+    VDRPRG=`which "$VDRPRG"`
+    if [ -z "$VDRPRG" ] ; then
+        echo "VDR command binary not found."
+        exit 1
+    fi
+    
+    # Build up command line:
+    VDRCMD="$VDRPRG"
+    [ -n "$ADDPARAM"  ] && VDRCMD="$VDRCMD $ADDPARAM"
+    [ -n "$WRAPPER"   ] && VDRCMD="$WRAPPER $VDRCMD"
+
+    [ -n "$AUDIO"     ] && VDRCMD="$VDRCMD -a \"$AUDIO\""
+    [ -n "$CONFIGDIR" ] && VDRCMD="$VDRCMD -c \"$CONFIGDIR\""
+    [ -n "$DAEMON"    ] && VDRCMD="$VDRCMD -d"
+
+    for ((i=0;i<${#DVBDEVICE[*]};i++)) ; do 
+        [ -n "${DVBDEVICE[i]}" ] && VDRCMD="$VDRCMD -D ${DVBDEVICE[i]}"
+    done
+
+    [ -n "$EPGFILE"   ] && VDRCMD="$VDRCMD -E \"$EPGFILE\""
+    [ -n "$GRAB"      ] && VDRCMD="$VDRCMD -g"
+    [ -n "$LOGLEVEL"  ] && VDRCMD="$VDRCMD -l $LOGLEVEL"
+    [ -n "$LIBDIR"    ] && VDRCMD="$VDRCMD -L $LIBDIR"
+    case "$LIRC" in
+        1|"") VDRCMD="$VDRCMD --lirc";;
+        0) ;;
+        *) VDRCMD="$VDRCMD --lirc=\"$LIRC\"";;
+    esac
+    [ -n "$MUTE"      ] && VDRCMD="$VDRCMD -m"
+    [ -n "$NOKBD"     ] && VDRCMD="$VDRCMD --no-kbd"
+    [ -n "$SVDRPPORT" ] && VDRCMD="$VDRCMD -p $SVDRPPORT"
+
+    for ((i=0;i<${#PLUGINS[*]};i++)) ; do
+        p="${PLUGINS[i]}"
+        if [ -n "$p" ] ; then
+            # do some shell quoting
+            p="${p//'\'/\\\\}"
+            p="${p//'\\'/\\\\}"
+            p="${p//\"/\\\"}"
+            p="${p//\$/\\\$}"
+            p="${p//\`/\\\`}"
+            VDRCMD="$VDRCMD -P \"$p\""
+        fi
+    done
+
+    if [ -n "$PLUGINSETUPCONF" ] ; then
+        ALL_PLUGINS=`< $PLUGINSETUPCONF`
+        VDRCMD="$VDRCMD $ALL_PLUGINS"
+    fi
+
+    [ -n "$RECORDCMD" ] && VDRCMD="$VDRCMD -r \"$RECORDCMD\""
+    case "$RCU" in
+        1|"") VDRCMD="$VDRCMD --rcu";;
+        0) ;;
+        *) VDRCMD="$VDRCMD --rcu=\"$RCU\"";;
+    esac
+    [ -n "$SHUTDOWN"  ] && VDRCMD="$VDRCMD -s \"$SHUTDOWN\""
+    [ -n "$TERMINAL"  ] && VDRCMD="$VDRCMD -t \"$TERMINAL\""
+    [ -n "$VDRUSER"   ] && VDRCMD="$VDRCMD -u \"$VDRUSER\""
+    [ -n "$VFAT"      ] && VDRCMD="$VDRCMD -v"
+    [ -n "$VIDEODIR"  ] && VDRCMD="$VDRCMD -v \"$VIDEODIR\""
+    [ -n "$WATCHDOG"  ] && VDRCMD="$VDRCMD -w $WATCHDOG"
+
+
+    [ -z "$TERMTIMEOUT" ] && TERMTIMEOUT=20
+    [ -z "$KILLTIMEOUT" ] && KILLTIMEOUT=5
+
+    return 0
+}
+
+function GetChilds() {
+    # Get PIDs of all forked childs of PID=$1, binary executable=$2
+    # Returns list of PIDs in childlist
+  
+    child="$1"
+    childlist=($child)
+    IFSBACKUP="$IFS"
+    for ((i=0;i<10;i++)) do
+        len=${#childlist[*]}
+        IFS=","
+        child=`{ echo "$child" ; $PGREP -f "^$2 " -P "${childlist[*]}" ; } | sort -u`
+        IFS="$IFSBACKUP"
+        childlist=($child)
+
+        [ "$len" -eq "${#childlist[*]}" ] && break
+    done
+}
+
+function WaitKill() {
+    # Terminates/Kills process $1, binary $2, timeout1 $3, timeout2 $4
+    
+    GetChilds "$1" "$2"
+
+    echo -n "Sending ${#childlist[*]} processes the TERM signal."
+    $KILL -TERM ${childlist[*]} >&- 2>&-
+
+    for ((i=0;i<$3;i++)) ; do
+        $PS ${childlist[*]} >&- 2>&- || { echo terminated. ; return ; }
+        
+        echo -n .
+        $SLEEP 1
+    done
+    echo
+
+    echo -n "Sending ${#childlist[*]} processes the KILL signal."
+    $KILL -KILL ${childlist[*]} >&- 2>&-
+    
+    for ((i=0;i<$4;i++)) ; do
+        $PS ${childlist[*]} >&- 2>&- || { echo terminated. ; return ; }
+        echo -n .
+        $SLEEP 1
+    done
+    echo failed.
+}
+
+
+
+#### ---------------
+####   Main script
+#### ---------------
+
+
+# Parse command line, step 1
+ParseCommandLine_Step1 "$@" || exit 1
+
+# Clean variables
+Clean
+
+# Load and process all configuration
+LoadConfFile || exit 1
+
+# Process command line
+ParseCommandLine_Step2 || exit 1
+
+
+if [ -n "$HELP" ] ; then
+    OnlineHelp
+    exit 0
+fi
+
+if [ -n "$VERSION" ] ; then
+    echo "runvdr version 0.1.0"
+    exit 0
+fi
+
+# Get old runvdr pid and move it to options
+if [ -n "$RUNVDRPID" ] ; then
+    OLDRUNVDRPID=""
+    [ -r "$RUNVDRPID" ] && OLDRUNVDRPID=`<$RUNVDRPID`
+
+    [ -z "$TERMINATE"  ] && TERMINATE="$OLDRUNVDRPID"
+    [ -z "$RESTART"    ] && RESTART="$OLDRUNVDRPID"
+    [ -z "$DVBRESTART" ] && DVBRESTART="$OLDRUNVDRPID"
+fi
+
+if [ "$TERMINATE" != "0" ] ; then
+    if [ -n "$TERMINATE" ] ; then
+        echo -n "Terminating runvdr (PID=$TERMINATE)"
+        $KILL -TERM $TERMINATE
+        while [ -z "$WAIT" ] || [ "$WAIT" -gt 0 ] ; do
+            $PS $TERMINATE >&- || { echo done ; break ; }
+            echo -n "."
+            $SLEEP 1
+            [ -n "$WAIT" ] && let WAIT=WAIT-1
+        done
+
+        echo ""
+    else
+        echo "No runvdr process to terminate."
+    fi
+    exit 0
+fi
+
+if [ "$RESTART" != "0" ] ; then
+    if [ -n "$RESTART" ] ; then
+       echo -n "Restarting runvdr (PID=$RESTART)..."
+       $KILL -USR1 $RESTART
+       echo ""
+    else
+        echo "No runvdr process to restart."
+    fi
+    exit 0
+fi
+
+if [ "$DVBRESTART" != "0" ] ; then
+    if [ -n "$DVBRESTART" ] ; then
+        echo -n "DVB-restarting runvdr (PID=$DVBRESTART)..."
+        $KILL -USR2 $DVBRESTART
+        echo ""
+    else
+        echo "No runvdr process to dvb-restart."
+    fi
+    exit 0
+fi
+
+
+# Build up VDR command
+BuildCommand || exit 1
+
+
+# Switch front console
+
+[ -n "$SWITCHTERMINAL" ] && $CHVT $SWITCHTERMINAL
+
+if [ -n "$LANGUAGE" ] ; then
+    LANG="$LANGUAGE"
+    export LANG
+fi
+
+# Remember PID of this process
+
+[ -n "$RUNVDRPID" ] && echo $$ > $RUNVDRPID
+
+
+# Prepare terminal redirection
+if [ -n "$TERMINAL" ] ; then
+    exec 1>"$TERMINAL"
+    exec 2>"$TERMINAL"
+fi
+
+
+# Load driver if it hasn't been loaded already:
+$DVBLOAD
+
+# Count how often VDR terminated very quickly
+SHORTRUNTIMES=0
+
+while (true) do 
+    echo -n "Starting VDR at " ; $DATE
+
+    # Trap some signals sent to this script
+    trap "SIG=HUP" SIGHUP
+    trap "SIG=INT" SIGINT
+    trap "SIG=QUIT" SIGQUIT
+    trap "SIG=TERM" SIGTERM
+    trap "SIG=USR1" SIGUSR1
+    trap "SIG=USR2" SIGUSR2
+
+    # clean up signal variable
+    SIG=
+    
+    # Remember start time
+    STARTTIME=`$DATE +%s`
+
+    echo "$VDRCMD"
+
+    # Run VDR
+    eval "$VDRCMD &"
+    
+    # Remember PID of VDR process
+    PID=$!
+    
+    # Wait for VDR to end or signal to arrive
+    wait $PID
+    
+    # Remember return value of VDR
+    RET=$?
+    
+    # Remember stop time
+    STOPTIME=`$DATE +%s`
+    # Count if time is less than 10 seconds,
+    # forget otherwise
+    if [ $((STOPTIME-STARTTIME)) -le 10 ] ; then
+        SHORTRUNTIMES=$((SHORTRUNTIMES+1))
+        echo "VDR died within 10 seconds, this happened $SHORTRUNTIMES time(s)."
+    else
+        SHORTRUNTIMES=0
+    fi
+    
+    # Reset terminal status
+    [ -n "$TERMINAL" ] && $SETTERM -initialize
+    
+    case "$SIG" in
+      HUP | INT | QUIT | TERM)
+        echo -n "Terminating by request at " ; $DATE
+
+        # Kill remaining VDR traces
+        WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
+    
+        # and exit
+        break
+        ;;
+      USR1)
+        echo -n "Restarting VDR by request at " ; $DATE
+
+        # Kill remaining VDR traces
+        WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
+    
+        # and loop
+        ;;
+      USR2)
+        echo -n "Restarting VDR and DVB by request at " ; $DATE
+
+        # Kill remaining VDR traces
+        WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
+    
+        # reload DVB stuff
+        $DVBUNLOAD
+        $DVBLOAD
+        ;;
+      *)  # Non-signal termination
+        if [ $RET -eq 0 -o $RET -eq 2 ] ; then 
+            echo -n "Terminating by error level $RET at " ; $DATE
+
+            # Kill remaining VDR traces
+            WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
+    
+            # and exit
+            break
+        fi
+        if [ $SHORTRUNTIMES -ge 5 ] ; then
+            echo -n "Terminating because VDR died 5 times in a row quickly at " ; $DATE
+
+            # Kill remaining VDR traces
+            WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
+    
+            # and exit
+            break;
+        fi
+        echo -n "Restarting VDR and DVB by error level $RET at " ; $DATE
+
+        # Kill remaining VDR traces
+        WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
+
+        # reload DVB
+        $DVBUNLOAD
+        $DVBLOAD
+
+        # and loop
+        ;;
+    esac
+    
+    # reload configuration
+    Clean
+    LoadConfFile || exit 1
+    ParseCommandLine_Step2 || exit 1
+    BuildCommand || exit 1
+
+    # Catch remaining in-between signals
+    case "$SIG" in
+      HUP | INT | QUIT | TERM)
+        break
+        ;;
+    esac
+done
+
+# Clean up PID file
+[ -n "$RUNVDRPID" ] && rm $RUNVDRPID >&- 2>&-
+
