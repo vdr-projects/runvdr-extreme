@@ -63,19 +63,19 @@ SETTERM="setterm"
 #  -s #  --shutdown # SHUTDOWN         call CMD to shutdown the computer
 #  -t #  --terminal # TERMINAL         controlling tty
 #  -u #  --user #     USER             run as user USER; only applicable if started as root
-#  -v    --vfat       VFAT             encode special characters in recording names
+#        --vfat       VFAT             encode special characters in recording names
 #  -v #  --video #    VIDEODIR         use DIR as video directory
 #  -w #  --watchdog # WATCHDOG         activate the watchdog timer with a timeout of SEC
 
 
-which $PGREP     >- || { echo missing $PGREP... >2 ;   exit 1 ; }
-which $PS        >- || { echo missing $PS... >2 ;      exit 1 ; }
-which $GETOPT    >- || { echo missing $GETOPT... >2 ;  exit 1 ; }
-which $KILL      >- || { echo missing $KILL... >2 ;    exit 1 ; }
-which $SLEEP     >- || { echo missing $SLEEP... >2 ;   exit 1 ; }
-which $CHVT      >- || { echo missing $CHVT... >2 ;    exit 1 ; }
-which $DATE      >- || { echo missing $DATE... >2 ;    exit 1 ; }
-which $SETTERM   >- || { echo missing $SETTERM... >2 ; exit 1 ; }
+which $PGREP     >/dev/null || { echo missing $PGREP... >2 ;   exit 1 ; }
+which $PS        >/dev/null || { echo missing $PS... >2 ;      exit 1 ; }
+which $GETOPT    >/dev/null || { echo missing $GETOPT... >2 ;  exit 1 ; }
+which $KILL      >/dev/null || { echo missing $KILL... >2 ;    exit 1 ; }
+which $SLEEP     >/dev/null || { echo missing $SLEEP... >2 ;   exit 1 ; }
+which $CHVT      >/dev/null || { echo missing $CHVT... >2 ;    exit 1 ; }
+which $DATE      >/dev/null || { echo missing $DATE... >2 ;    exit 1 ; }
+which $SETTERM   >/dev/null || { echo missing $SETTERM... >2 ; exit 1 ; }
 
 
 
@@ -374,7 +374,7 @@ function BuildCommand() {
     done
 
     [ -n "$EPGFILE"   ] && VDRCMD="$VDRCMD -E \"$EPGFILE\""
-    [ -n "$GRAB"      ] && VDRCMD="$VDRCMD -g"
+    [ -n "$GRAB"      ] && VDRCMD="$VDRCMD -g $GRAB"
     [ -n "$LOGLEVEL"  ] && VDRCMD="$VDRCMD -l $LOGLEVEL"
     [ -n "$LIBDIR"    ] && VDRCMD="$VDRCMD -L $LIBDIR"
     case "$LIRC" in
@@ -413,7 +413,7 @@ function BuildCommand() {
     [ -n "$SHUTDOWN"  ] && VDRCMD="$VDRCMD -s \"$SHUTDOWN\""
     [ -n "$TERMINAL"  ] && VDRCMD="$VDRCMD -t \"$TERMINAL\""
     [ -n "$VDRUSER"   ] && VDRCMD="$VDRCMD -u \"$VDRUSER\""
-    [ -n "$VFAT"      ] && VDRCMD="$VDRCMD -v"
+    [ -n "$VFAT"      ] && VDRCMD="$VDRCMD --vfat"
     [ -n "$VIDEODIR"  ] && VDRCMD="$VDRCMD -v \"$VIDEODIR\""
     [ -n "$WATCHDOG"  ] && VDRCMD="$VDRCMD -w $WATCHDOG"
 
@@ -495,7 +495,7 @@ if [ -n "$HELP" ] ; then
 fi
 
 if [ -n "$VERSION" ] ; then
-    echo "runvdr version 0.1.0"
+    echo "runvdr version 0.1.1"
     exit 0
 fi
 
