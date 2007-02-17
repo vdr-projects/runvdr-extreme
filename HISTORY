@@ -1,6 +1,14 @@
 runvdr extreme Revision History
 -------------------------------
 
+2007-02-18: Version 0.2.0
+
+- New: Pass DVBLOAD and DVBUNLOAD to eval, allows to execute more than one 
+  command, thanks to Thomas Büschgens
+- New: Load ~/.runvdr.conf as default, load /etc/runvdr.conf as fallback
+- New: INCLUDE directive to load other config file  
+- New: -P "-plugin" drops plugin from plugin load list. Same for -D.
+- Change: LANGUAGE now sets LC_ALL, not LANG.
 
 2007-02-03: Version 0.1.1
 

@@ -3,7 +3,7 @@
 
 
 Written by:               Udo Richter <udo_richter(a)gmx.de>
-Project's homepage:       http://www.richter-udo.de/vdr/scripts.en.html#runvdr
+Project's homepage:       http://www.udo-richter.de/vdr/scripts.en.html#runvdr
 See the file COPYING for license information.
 
 
@@ -37,11 +37,43 @@ Some of the features of runvdr extreme:
 Quick-start
 --------------------------------------------------------------------------
 - Copy runvdr to /usr/local/bin/ or whereever you like
-- Copy runvdr.conf.example to /etc/runvdr.conf
-- Edit /etc/runvdr.conf to match your needs
+- Copy runvdr.conf.example to /etc/runvdr.conf if you want to run VDR as 
+  server, or ~/.runvdr.conf if you want to run it as user.
+- Edit the runvdr.conf to match your needs
 
-The runvdr.conf is pretty much self-explaining. All options are also available
-on command line, just take a look at runvdr --help.
+The runvdr.conf is pretty much self-explaining. All runvdr.conf options are 
+also available on command line, see --help.
+
+
+
+Details
+--------------------------------------------------------------------------
+
+Options take this precedence:
+
+1. Command line options have highest precedence
+2. runvdr.conf file specified by -C or --runvdr-conf
+3. If no -C and no --runvdr-conf specified, use ~/.runvdr.conf
+4. If no -C and no --runvdr-conf and no ~/.runvdr.conf, use /etc/runvdr.conf
+5. If none of the above, runvdr built-in defaults are used.
+
+Only one of the runvdr.conf files is loaded by default, and only one -C
+option is evaluated. However, you can load the contents of another runvdr.conf
+file from a runvdr.conf by using the INCLUDE directive. For example, you can
+load /etc/runvdr.conf from within ~/.runvdr.conf to just override some of
+the settings for the current user.
+
+Plugins added by the AddPlugin directive in the conf file and the --plugin
+and -P command line option can be removed again from the list of plugins 
+by specifying "AddPlugin -name", --plugin="-name" or -P-name. 
+The name part acts as a pattern to the beginning of the plugin name, all 
+plugins matching "name*" will be dropped. Especially "AddPlugin -" and -P- will
+drop all plugins from the list. The same mechanism works for the -D device
+parameter.
+
+To pass parameters to VDR without parsing by runvdr, use -- as paramenter.
+All parameters after -- will be directly passed to VDR. For erxample, 
+"runvdr -- --help" will show the command line help of VDR instead of runvdr.
 
 
 
@@ -90,7 +122,7 @@ Dito, but also reload the DVB drivers:
 
 Use the new fresh compiled VDR for the first time:
 
-  runvdr --vdr=/usr/src/vdr-1.4.3/vdr --lib=/usr/src/vdr-1.4.3/PLUGINS/lib
+  runvdr --vdr=/usr/src/vdr-1.5.0/vdr --lib=/usr/src/vdr-1.5.0/PLUGINS/lib
 
 For debugging, start VDR with no terminal redirection:
 
@@ -103,6 +135,10 @@ Load all plugins and also the hello plugin:
 Load only the hello plugin:
 
   runvdr -P- -P hello
+
+Load all plugins, but not the hello-plugin:
+
+  runvdr -P-hello
 
 Do a dry-run of runvdr:
 

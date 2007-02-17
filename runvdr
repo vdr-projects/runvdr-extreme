@@ -8,7 +8,7 @@
 #      http://www.richter-udo.de/vdr/scripts.html#runvdr
 #
 
-RUNVDRCONF=/etc/runvdr.conf
+RUNVDRCONF=""
 
 
 # Some unix commands being used:
@@ -164,10 +164,19 @@ function Clean() {
 # Helper functions
 function AddPluginString() {
     # add $1 as plugin
-    if [ "$1" == "-" ] ; then
+
+    if [ -n "$1" -a -z "${1##-*}" ] ; then
+        local pattern="${1#-}*"
+        
+        local -a plugins1
+        plugins1=("${PLUGINS[@]}")
         PLUGINS=()
+        
+        for i in "${plugins1[@]}" ; do 
+            [ -n "${i##$pattern}" ] && PLUGINS[${#PLUGINS[*]}]="$i";
+        done
     else
-        PLUGINS[${#PLUGINS[*]}]="$*"
+        [ -n "$1" ] && PLUGINS[${#PLUGINS[*]}]="$1";
     fi
 }
 function AddPlugin() {
@@ -195,24 +204,51 @@ function AddPlugin() {
     AddPluginString "$plugin"
 }
 function AddDevice() {
-    if [ "$1" == "-" ] ; then
+    if [ -n "$1" -a -z "${1##-*}" ] ; then
+        local pattern="${1#-}*"
+        
+        local -a devices1
+        devices1=("${DVBDEVICE[@]}")
         DVBDEVICE=()
+        
+        for i in "${devices1[@]}" ; do 
+            [ -n "${i##$pattern}" ] && DVBDEVICE[${#DVBDEVICE[*]}]="$i";
+        done
     else
-        DVBDEVICE[${#DVBDEVICE[*]}]="$*";
+        [ -n "$1" ] && DVBDEVICE[${#DVBDEVICE[*]}]="$1";
     fi
 }
 
+
+function INCLUDE() {
+    # include different conf file
+    if [ -n "$1" ] ; then
+        if [ -r "$1" ] ; then
+            . "$1" || exit 1
+        else
+            echo "runvdr: $1 not found." >&2
+        fi
+    fi
+}
 
 function LoadConfFile() {
 
     # Load configuration file
     
-    if [ -r $RUNVDRCONF ] ; then
-        . $RUNVDRCONF || exit 1
-    else
-        echo "runvdr: $RUNVDRCONF not found." >&2
+    if [ -z "$RUNVDRCONF" -a -r ~/.runvdr.conf ] ; then
+        RUNVDRCONF=~/.runvdr.conf
     fi
-
+    if [ -z "$RUNVDRCONF" -a -r /etc/runvdr.conf ] ; then
+        RUNVDRCONF=/etc/runvdr.conf
+    fi
+    if [ -n "$RUNVDRCONF" ] ; then
+        if [ -r "$RUNVDRCONF" ] ; then
+            . "$RUNVDRCONF" || exit 1
+        else
+            echo "runvdr: $RUNVDRCONF not found." >&2
+        fi
+    fi
+    
     # Transform some defaults, so empty parameters can have a 
     # non-default meaning
     [ -z "$LIRC" ] && LIRC=0
@@ -327,6 +363,7 @@ Parsed VDR options:
 -d   --daemon     run in daemon mode
 -D # --device=#   use only the given DVB device (NUM = 0, 1, 2...)
                   Use '-' to override devices from config file
+                  Use '-x' to ignore device x from config file
 -E # --epgfile=#  write the EPG data into the given FILE. - to disable.
 -g # --grab=#     write images from the SVDRP command GRAB into the given DIR
 -L # --lib=#      search for plugins in DIR
@@ -335,7 +372,8 @@ Parsed VDR options:
 -m   --mute       mute audio of the primary DVB device at startup
      --no-kbd     don't use the keyboard as an input device
 -P # --plugin=#   load a plugin defined by the given options
-                  Use '-' to ignore plugins from config file
+                  Use '-' to ignore all plugins from config file
+                  Use '-xx' to ignore plugin xx from config file
 -p # --port=#     use PORT for SVDRP
      --rcu[=#]    use a remote control device, attached to PATH
 -r # --record=#   call CMD before and after a recording
@@ -369,8 +407,8 @@ function BuildCommand() {
     [ -n "$CONFIGDIR" ] && VDRCMD="$VDRCMD -c \"$CONFIGDIR\""
     [ -n "$DAEMON"    ] && VDRCMD="$VDRCMD -d"
 
-    for ((i=0;i<${#DVBDEVICE[*]};i++)) ; do 
-        [ -n "${DVBDEVICE[i]}" ] && VDRCMD="$VDRCMD -D ${DVBDEVICE[i]}"
+    for i in "${DVBDEVICE[@]}" ; do 
+        [ -n "$i" ] && VDRCMD="$VDRCMD -D $i"
     done
 
     [ -n "$EPGFILE"   ] && VDRCMD="$VDRCMD -E \"$EPGFILE\""
@@ -386,8 +424,7 @@ function BuildCommand() {
     [ -n "$NOKBD"     ] && VDRCMD="$VDRCMD --no-kbd"
     [ -n "$SVDRPPORT" ] && VDRCMD="$VDRCMD -p $SVDRPPORT"
 
-    for ((i=0;i<${#PLUGINS[*]};i++)) ; do
-        p="${PLUGINS[i]}"
+    for p in "${PLUGINS[@]}" ; do
         if [ -n "$p" ] ; then
             # do some shell quoting
             p="${p//'\'/\\\\}"
@@ -495,7 +532,7 @@ if [ -n "$HELP" ] ; then
 fi
 
 if [ -n "$VERSION" ] ; then
-    echo "runvdr version 0.1.1"
+    echo "runvdr version 0.2.0"
     exit 0
 fi
 
@@ -559,8 +596,8 @@ BuildCommand || exit 1
 [ -n "$SWITCHTERMINAL" ] && $CHVT $SWITCHTERMINAL
 
 if [ -n "$LANGUAGE" ] ; then
-    LANG="$LANGUAGE"
-    export LANG
+    LC_ALL="$LANGUAGE"
+    export LC_ALL
 fi
 
 # Remember PID of this process
@@ -576,7 +613,7 @@ fi
 
 
 # Load driver if it hasn't been loaded already:
-$DVBLOAD
+eval "$DVBLOAD"
 
 # Count how often VDR terminated very quickly
 SHORTRUNTIMES=0
@@ -651,8 +688,8 @@ while (true) do
         WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
     
         # reload DVB stuff
-        $DVBUNLOAD
-        $DVBLOAD
+        eval "$DVBUNLOAD"
+        eval "$DVBLOAD"
         ;;
       *)  # Non-signal termination
         if [ $RET -eq 0 -o $RET -eq 2 ] ; then 
@@ -679,8 +716,8 @@ while (true) do
         WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
 
         # reload DVB
-        $DVBUNLOAD
-        $DVBLOAD
+        eval "$DVBUNLOAD"
+        eval "$DVBLOAD"
 
         # and loop
         ;;

@@ -3,9 +3,18 @@
 #      Sample configuration file for the runvdr vdr-launcher script.
 #
 #      by Udo Richter <udo_richter(a)gmx.de>
-#      http://www.richter-udo.de/vdr/scripts.html#runvdr
+#      http://www.udo-richter.de/vdr/scripts.html#runvdr
 #
 #
+
+
+# Include other configuration file for defaults
+# Must be first, or will override all previous settings
+# You may want to use this in ~/.runvdr.conf if you also want to load
+# /etc/runvdr.conf. DO NOT create infinite loops with this!
+#
+# INCLUDE /etc/runvdr.conf
+
 
 ##### -------------------------
 #####   Common config options
@@ -17,11 +26,11 @@ VDRPRG="/usr/local/bin/vdr"
 # Command to load the DVB drivers
 # DVBLOAD will be launched before VDR starts and whenever the drivers
 # need to be reloaded.
-DVBLOAD=""
+DVBLOAD=''
 
 # Command to unload the DVB drivers
 # DVBUNLOAD will be launched whenever the drivers need to be reloaded.
-DVBUNLOAD=""
+DVBUNLOAD=''
 
 # Use VIDEODIR as video directory. The default is /video.
 VIDEODIR="/video"
@@ -46,7 +55,7 @@ CONFIGDIR="/video"
 # which would load a plugin named "hello", giving it the three 
 # command line options "-b", "-a" and "A B C"
 #
-# Note: Using the command line option --plugin requires additional
+# Note: Using the command line option --plugin and -P requires additional
 # quoting. The corresponding command line would be:
 #
 #   runvdr --plugin "hello -b -a \"A B C\""
@@ -137,6 +146,7 @@ RCU=
 VFAT=
 
 # Store PID of runvdr into a file?
+# RUNVDRPID=~/.runvdr.pid
 RUNVDRPID=/var/run/runvdr.pid
 
 # Set the controlling terminal. For example, /dev/tty8
