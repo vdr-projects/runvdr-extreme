@@ -1,6 +1,18 @@
 runvdr extreme Revision History
 -------------------------------
 
+
+2008-03-02: Version 0.3.0
+- New: Support for the new VDR parameters --localedir and --userdump
+  (LOCALEDIR="..." and USERDUMP="1")
+- New: Wildcard loading with INCLUDE, allows for example to INCLUDE 
+  /etc/runvdr/conf.d/* to load several one-file-per-plugin config files.
+- New: runvdr-conf.d, a plugin enable/disable service
+- New: osdserver frontend for runvdr-conf.d
+- New: Sample init.d script, Debian style
+- Fix: Clean up mess with USER= and VDRUSER=. VDRUSER still works,
+  but is deprecated.
+
 2007-02-18: Version 0.2.0
 
 - New: Pass DVBLOAD and DVBUNLOAD to eval, allows to execute more than one 

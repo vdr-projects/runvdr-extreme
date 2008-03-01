@@ -9,11 +9,17 @@
 
 
 # Include other configuration file for defaults
-# Must be first, or will override all previous settings
+# Must be first, or will override all previous settings.
+# You can also use wildcards to load several files in lexicographic order:
+# INCLUDE /etc/runvdr/plugins.d/*
 # You may want to use this in ~/.runvdr.conf if you also want to load
 # /etc/runvdr.conf. DO NOT create infinite loops with this!
 #
 # INCLUDE /etc/runvdr.conf
+#
+# For use with runvdr-conf.d, un-comment this line:
+# INCLUDE /etc/runvdr/conf.d/*
+
 
 
 ##### -------------------------
@@ -39,6 +45,10 @@ VIDEODIR="/video"
 # from the video directory).
 CONFIGDIR="/video"
 
+# Location of locale files for VDR 1.5.14 and newer. Default is to use
+# the builtin "./locale" or whatever was compiled as LOCDIR into VDR.
+# 
+# LOCALEDIR="/usr/src/vdr/locale"
 
 ##### -----------
 #####   Plugins
@@ -81,7 +91,7 @@ LIBDIR=
 # 'root' is necessary if the system time shall be set from the transponder 
 # data, but for security reasons vdr can switch to a lesser privileged user
 # id during normal operation.
-VDRUSER=""
+USER=""
 
 # Write the EPG data into EPGFILE. Default is /video/epg.data. 
 # Use EPGFILE=- to disable this. If EPGFILE is a directory, the file 
@@ -144,6 +154,9 @@ RCU=
 # encode special characters in recording names to avoid problems 
 # with VFAT file systems
 VFAT=
+
+# Allow coredumps if USER= is given (debugging)
+# USERDUMP="1"
 
 # Store PID of runvdr into a file?
 # RUNVDRPID=~/.runvdr.pid

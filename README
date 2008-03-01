@@ -32,6 +32,14 @@ Some of the features of runvdr extreme:
 - Can set locale for VDR daemon
 - Optionally supports pluginsetup-plugin
 
+Additional features of runvdr-conf.d:
+
+- Loads configuration files in alphabetical order from a
+  directory, comparable to init.d directories.
+- Command line tool to activate/deactivate plugins
+- Control the load order of plugins
+- Optional: Menu configuration using osdserver plugin
+
 
 
 Quick-start
@@ -43,6 +51,17 @@ Quick-start
 
 The runvdr.conf is pretty much self-explaining. All runvdr.conf options are 
 also available on command line, see --help.
+
+For the init-script (Debian):
+- Copy init.d.runvdr.Debian to /etc/init.d/runvdr
+- Use update-rc.d to set up startup runlevel
+
+For runvdr-conf.d:
+- Copy runvdr-conf.d to /usr/local/bin/
+- Create /etc/runvdr/ and fill it with files like skeleton.example
+- Add INCLUDE /etc/runvdr/conf.d/* to runvdr.conf
+- Use runvdr-conf.d show|enable|disable to configure the plugins
+- (Optional) Add "runvdr-conf.d osdserver" to commands.conf.
 
 
 
@@ -63,6 +82,11 @@ file from a runvdr.conf by using the INCLUDE directive. For example, you can
 load /etc/runvdr.conf from within ~/.runvdr.conf to just override some of
 the settings for the current user.
 
+The INCLUDE directive also supports multiple files per line. By that, you can
+use INCLUDE /etc/runvdr/conf.d/* to load a whole directory full of config 
+files at once. For example, you can put files (or symlinks) for each plugin 
+to load into that directory, containing a single line "AddPlugin xxx".
+
 Plugins added by the AddPlugin directive in the conf file and the --plugin
 and -P command line option can be removed again from the list of plugins 
 by specifying "AddPlugin -name", --plugin="-name" or -P-name. 
@@ -74,6 +98,45 @@ parameter.
 To pass parameters to VDR without parsing by runvdr, use -- as paramenter.
 All parameters after -- will be directly passed to VDR. For erxample, 
 "runvdr -- --help" will show the command line help of VDR instead of runvdr.
+
+
+
+runvdr-conf.d
+--------------------------------------------------------------------------
+
+The runvdr-conf.d is an (optional) tool to manage plugins. It works simillar
+to the init.d concept, where a whole directory of symbolic links is loaded
+in alphabetical order.
+
+In case of runvdr-conf.d, one file similar to the skeleton.example file
+is placed in /etc/runvdr/ for each plugin that is available. Only plugins
+that have a symbolic link in /etc/runvdr/conf.d/ to their config file will
+be loaded. For this, the corresponding INCLUDE line must be enabled in 
+runvdr.conf.
+
+The following commands are available to manage the plugins:
+
+runvdr-conf.d show [name]
+  Shows all plugins (resp. only the 'name' plugin), including the full name
+  and the load priority. 'name' is the file name in the /etc/runvdr/ 
+  directory.
+
+runvdr-conf.d enable name [--prio XX]
+  Activates a plugin for next restart. Uses default priority or the specified
+  priority. For that, a symbolic link to /etc/runvdr/name will be created
+  under /etc/runvdr/conf.d/XXname.
+
+runvdr-conf.d disable name
+  Deactivates a plugin from next restart on, by deleting the symbolic link
+  under /etc/runvdr/conf.d/XXname.
+
+runvdr-conf.d osdserver [--debug]
+  Connects to the osdserver plugin and allows interactive plugin configuration
+  using the VDR OSD. From there, plugins can be activated and deactivated, 
+  and the load priority can be changed.
+  Without --debug, runvdr-conf.d returns immediately, disconnection standard 
+  input/output, so it can be started from commands.conf. With --debug, the 
+  osdserver communication will be shown.
 
 
 

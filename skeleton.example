@@ -1,0 +1,7 @@
+# Skeleton config file for placing in /etc/runvdr/
+
+# The next two lines must be present:
+# Plugin name: Skeleton plugin
+# Default priority: 50
+
+AddPlugin skeleton

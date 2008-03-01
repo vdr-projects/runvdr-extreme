@@ -45,37 +45,39 @@ SETTERM="setterm"
 #
 # Supported options of VDR 
 #                     
-#  -a #  --audio #    AUDIO            send Dolby Digital audio to stdin of command #
-#  -c #  --config #   CONFIGDIR        read config files from DIR
-#  -d    --daemon     DAEMON           run in daemon mode
-#  -D #  --device #   DVBDEVICE        use only the given DVB device (NUM = 0, 1, 2...)
-#  -E #  --epgfile #  EPGFILE          write the EPG data into the given FILE. - to disable.
-#  -g #  --grab #     GRAB             write images from the SVDRP command GRAB into the given DIR;
-#  -L #  --lib #      LIBDIR           search for plugins in DIR (default is %s)
-#        --lirc #?    LIRC             use a LIRC remote control device, attached to PATH
-#  -l #  --log #      LOGLEVEL         set log level (default: 3)
-#  -m    --mute       MUTE             mute audio of the primary DVB device at startup
-#        --no-kbd     NOKBD            don't use the keyboard as an input device
-#  -P #  --plugin #   PLUGINS          load a plugin defined by the given options
-#  -p #  --port #     SVDRPPORT        use PORT for SVDRP 
-#        --rcu #?     RCU              use a remote control device, attached to PATH
-#  -r #  --record #   RECORDCMD        call CMD before and after a recording
-#  -s #  --shutdown # SHUTDOWN         call CMD to shutdown the computer
-#  -t #  --terminal # TERMINAL         controlling tty
-#  -u #  --user #     USER             run as user USER; only applicable if started as root
-#        --vfat       VFAT             encode special characters in recording names
-#  -v #  --video #    VIDEODIR         use DIR as video directory
-#  -w #  --watchdog # WATCHDOG         activate the watchdog timer with a timeout of SEC
+#  -a #  --audio #     AUDIO            send Dolby Digital audio to stdin of command #
+#  -c #  --config #    CONFIGDIR        read config files from DIR
+#  -d    --daemon      DAEMON           run in daemon mode
+#  -D #  --device #    DVBDEVICE        use only the given DVB device (NUM = 0, 1, 2...)
+#  -E #  --epgfile #   EPGFILE          write the EPG data into the given FILE. - to disable.
+#  -g #  --grab #      GRAB             write images from the SVDRP command GRAB into the given DIR;
+#  -L #  --lib #       LIBDIR           search for plugins in DIR (default is %s)
+#        --lirc #?     LIRC             use a LIRC remote control device, attached to PATH
+#        --localedir # LOCALEDIR        search for locale files in DIR
+#  -l #  --log #       LOGLEVEL         set log level (default: 3)
+#  -m    --mute        MUTE             mute audio of the primary DVB device at startup
+#        --no-kbd      NOKBD            don't use the keyboard as an input device
+#  -P #  --plugin #    PLUGINS          load a plugin defined by the given options
+#  -p #  --port #      SVDRPPORT        use PORT for SVDRP 
+#        --rcu #?      RCU              use a remote control device, attached to PATH
+#  -r #  --record #    RECORDCMD        call CMD before and after a recording
+#  -s #  --shutdown #  SHUTDOWN         call CMD to shutdown the computer
+#  -t #  --terminal #  TERMINAL         controlling tty
+#  -u #  --user #      USER             run as user USER; only applicable if started as root
+#        --userdump    USERDUMP         allow coredumps if -u is given (debugging)
+#        --vfat        VFAT             encode special characters in recording names
+#  -v #  --video #     VIDEODIR         use DIR as video directory
+#  -w #  --watchdog #  WATCHDOG         activate the watchdog timer with a timeout of SEC
 
 
-which $PGREP     >/dev/null || { echo missing $PGREP... >2 ;   exit 1 ; }
-which $PS        >/dev/null || { echo missing $PS... >2 ;      exit 1 ; }
-which $GETOPT    >/dev/null || { echo missing $GETOPT... >2 ;  exit 1 ; }
-which $KILL      >/dev/null || { echo missing $KILL... >2 ;    exit 1 ; }
-which $SLEEP     >/dev/null || { echo missing $SLEEP... >2 ;   exit 1 ; }
-which $CHVT      >/dev/null || { echo missing $CHVT... >2 ;    exit 1 ; }
-which $DATE      >/dev/null || { echo missing $DATE... >2 ;    exit 1 ; }
-which $SETTERM   >/dev/null || { echo missing $SETTERM... >2 ; exit 1 ; }
+which $PGREP     >/dev/null || { echo missing $PGREP... >&2 ;   exit 1 ; }
+which $PS        >/dev/null || { echo missing $PS... >&2 ;      exit 1 ; }
+which $GETOPT    >/dev/null || { echo missing $GETOPT... >&2 ;  exit 1 ; }
+which $KILL      >/dev/null || { echo missing $KILL... >&2 ;    exit 1 ; }
+which $SLEEP     >/dev/null || { echo missing $SLEEP... >&2 ;   exit 1 ; }
+which $CHVT      >/dev/null || { echo missing $CHVT... >&2 ;    exit 1 ; }
+which $DATE      >/dev/null || { echo missing $DATE... >&2 ;    exit 1 ; }
+which $SETTERM   >/dev/null || { echo missing $SETTERM... >&2 ; exit 1 ; }
 
 
 
@@ -89,8 +91,8 @@ function ParseCommandLine_Step1() {
         runvdr-pid:,dvb-load:,dvb-unload:,language:,wrapper:,\
         term-timeout:,kill-timeout:,terminate::,restart::,dvb-restart::,\
         wait::,audio:,config:,daemon,device:,epgfile:,grab:,help,lib:,lirc::,\
-        log:,mute,no-kbd,plugin:,port:,rcu::,record:,shutdown:,\
-        terminal:,user:,version,vfat,video:,watchdog:"
+        log:,localedir:,mute,no-kbd,plugin:,port:,rcu::,record:,shutdown:,\
+        terminal:,user:,userdump,version,vfat,video:,watchdog:"
     
 
     # prepare all optios for later processing
@@ -111,7 +113,7 @@ function ParseCommandLine_Step1() {
             break
             ;;
         *)
-            echo "Internal error!" >2
+            echo "Internal error!" >&2
             exit 1
             ;;
     esac ; done
@@ -146,6 +148,7 @@ function Clean() {
     LIBDIR=
     LIRC=
     LOGLEVEL=
+    LOCALEDIR=
     MUTE=
     NOKBD=
     PLUGINS=()
@@ -154,7 +157,8 @@ function Clean() {
     RCU=
     SHUTDOWN=
     TERMINAL=
-    VDRUSER=
+    USER=
+    USERDUMP=
     VFAT=
     VIDEODIR=
     WATCHDOG=
@@ -221,19 +225,23 @@ function AddDevice() {
 
 
 function INCLUDE() {
-    # include different conf file
-    if [ -n "$1" ] ; then
-        if [ -r "$1" ] ; then
-            . "$1" || exit 1
+    # include different conf file(s)
+    
+    for file ; do
+        if [ -r "$file" ] ; then
+            . "$file" || exit 1
         else
-            echo "runvdr: $1 not found." >&2
+            echo "runvdr: $file not found." >&2
         fi
-    fi
+    done
 }
 
 function LoadConfFile() {
 
     # Load configuration file
+    
+    VDRUSER=""
+    # Old option, supported for compatibility only
     
     if [ -z "$RUNVDRCONF" -a -r ~/.runvdr.conf ] ; then
         RUNVDRCONF=~/.runvdr.conf
@@ -247,6 +255,11 @@ function LoadConfFile() {
         else
             echo "runvdr: $RUNVDRCONF not found." >&2
         fi
+    fi
+
+    if [ -n "$VDRUSER" ] ; then
+        echo "runvdr: VDRUSER is deprecated. Use USER= instead."
+        [ -n "$USER" ] && USER="$VDRUSER"
     fi
     
     # Transform some defaults, so empty parameters can have a 
@@ -297,6 +310,7 @@ function ParseCommandLine_Step2() {
         -l|--log)          LOGLEVEL="$2";  shift 2;;
         -L|--lib)          LIBDIR="$2";    shift 2;;
            --lirc)         LIRC="$2";      shift 2;;
+           --localedir)    LOCALEDIR="$2"; shift 2;;
         -m|--mute)         MUTE=1;         shift  ;;
            --no-kbd)       NOKBD=1;        shift  ;;
         -p|--port)         SVDRPPORT="$2"; shift 2;;
@@ -306,6 +320,7 @@ function ParseCommandLine_Step2() {
         -s|--shutdown)     SHUTDOWN="$2";  shift 2;;
         -t|--terminal)     TERMINAL="$2";  shift 2;;
         -u|--user)         USER="$2";      shift 2;;
+           --userdump)     USERDUMP="$2";  shift  ;;
         -v|--video)        VIDEODIR="$2";  shift 2;;
            --vfat)         VFAT=1;         shift  ;;
         -w|--watchdog)     WATCHDOG="$2";  shift 2;;
@@ -316,7 +331,7 @@ function ParseCommandLine_Step2() {
             break
             ;;
         *)
-            echo "Internal error!" >2
+            echo "Internal error!" >&2
             exit 1
             ;;
     esac ; done
@@ -358,31 +373,33 @@ runvdr Options:
 -h, --help            print this help and exit
 
 Parsed VDR options:
--a # --audio=#    send Dolby Digital audio to stdin of command CMD
--c # --config=#   read config files from DIR
--d   --daemon     run in daemon mode
--D # --device=#   use only the given DVB device (NUM = 0, 1, 2...)
-                  Use '-' to override devices from config file
-                  Use '-x' to ignore device x from config file
--E # --epgfile=#  write the EPG data into the given FILE. - to disable.
--g # --grab=#     write images from the SVDRP command GRAB into the given DIR
--L # --lib=#      search for plugins in DIR
-     --lirc[=#]   use a LIRC remote control device, attached to PATH
--l # --log=#      set log level
--m   --mute       mute audio of the primary DVB device at startup
-     --no-kbd     don't use the keyboard as an input device
--P # --plugin=#   load a plugin defined by the given options
-                  Use '-' to ignore all plugins from config file
-                  Use '-xx' to ignore plugin xx from config file
--p # --port=#     use PORT for SVDRP
-     --rcu[=#]    use a remote control device, attached to PATH
--r # --record=#   call CMD before and after a recording
--s # --shutdown=# call CMD to shutdown the computer
--t # --terminal=# controlling tty
--u # --user=#     run as user USER; only applicable if started as root
-     --vfat       encode special characters in recording names
--v # --video=#    use DIR as video directory
--w # --watchdog=# activate the watchdog timer with a timeout of SEC
+-a # --audio=#     send Dolby Digital audio to stdin of command CMD
+-c # --config=#    read config files from DIR
+-d   --daemon      run in daemon mode
+-D # --device=#    use only the given DVB device (NUM = 0, 1, 2...)
+                   Use '-' to override devices from config file
+                   Use '-x' to ignore device x from config file
+-E # --epgfile=#   write the EPG data into the given FILE. - to disable.
+-g # --grab=#      write images from the SVDRP command GRAB into the given DIR
+-L # --lib=#       search for plugins in DIR
+     --lirc[=#]    use a LIRC remote control device, attached to PATH
+     --localedir=# search for locale files in DIR
+-l # --log=#       set log level
+-m   --mute        mute audio of the primary DVB device at startup
+     --no-kbd      don't use the keyboard as an input device
+-P # --plugin=#    load a plugin defined by the given options
+                   Use '-' to ignore all plugins from config file
+                   Use '-xx' to ignore plugin xx from config file
+-p # --port=#      use PORT for SVDRP
+     --rcu[=#]     use a remote control device, attached to PATH
+-r # --record=#    call CMD before and after a recording
+-s # --shutdown=#  call CMD to shutdown the computer
+-t # --terminal=#  controlling tty
+-u # --user=#      run as user USER; only applicable if started as root
+     --userdump    allow coredumps if -u is given (debugging)
+     --vfat        encode special characters in recording names
+-v # --video=#     use DIR as video directory
+-w # --watchdog=#  activate the watchdog timer with a timeout of SEC
 
 All runvdr parameters after '--' will be passed to VDR without modification
 END-OF-HELP
@@ -420,6 +437,7 @@ function BuildCommand() {
         0) ;;
         *) VDRCMD="$VDRCMD --lirc=\"$LIRC\"";;
     esac
+    [ -n "$LOCALEDIR" ] && VDRCMD="$VDRCMD --localedir \"$LOCALEDIR\""
     [ -n "$MUTE"      ] && VDRCMD="$VDRCMD -m"
     [ -n "$NOKBD"     ] && VDRCMD="$VDRCMD --no-kbd"
     [ -n "$SVDRPPORT" ] && VDRCMD="$VDRCMD -p $SVDRPPORT"
@@ -447,9 +465,11 @@ function BuildCommand() {
         0) ;;
         *) VDRCMD="$VDRCMD --rcu=\"$RCU\"";;
     esac
+
     [ -n "$SHUTDOWN"  ] && VDRCMD="$VDRCMD -s \"$SHUTDOWN\""
     [ -n "$TERMINAL"  ] && VDRCMD="$VDRCMD -t \"$TERMINAL\""
-    [ -n "$VDRUSER"   ] && VDRCMD="$VDRCMD -u \"$VDRUSER\""
+    [ -n "$USER"      ] && VDRCMD="$VDRCMD -u \"$USER\""
+    [ -n "$USERDUMP"  ] && VDRCMD="$VDRCMD --userdump"
     [ -n "$VFAT"      ] && VDRCMD="$VDRCMD --vfat"
     [ -n "$VIDEODIR"  ] && VDRCMD="$VDRCMD -v \"$VIDEODIR\""
     [ -n "$WATCHDOG"  ] && VDRCMD="$VDRCMD -w $WATCHDOG"
@@ -532,7 +552,7 @@ if [ -n "$HELP" ] ; then
 fi
 
 if [ -n "$VERSION" ] ; then
-    echo "runvdr version 0.2.0"
+    echo "runvdr extreme version 0.3.0"
     exit 0
 fi
 
