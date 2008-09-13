@@ -83,6 +83,9 @@ LIBDIR=
 # If you use PluginSetup: Where is the the plugin_setup_runvdr.conf file?
 # PLUGINSETUPCONF="$CONFIGDIR/plugins/plugin_setup_runvdr.conf"
 
+# If you use Setup-Plugin: Where is the the sysconfig file?
+# SETUPPLUGINCONF="$CONFIGDIR/sysconfig"
+
 ##### -----------------------
 #####   More config options
 ##### -----------------------
@@ -158,6 +161,9 @@ VFAT=
 # Allow coredumps if USER= is given (debugging)
 # USERDUMP="1"
 
+# Fire up own X server as output device
+# XSERVER="/usr/bin/X -nolisten tcp -config /etc/X11/xorg-runvdr.conf :0"
+
 # Store PID of runvdr into a file?
 # RUNVDRPID=~/.runvdr.pid
 RUNVDRPID=/var/run/runvdr.pid
@@ -172,6 +178,14 @@ SWITCHTERMINAL=8
 # Set language for locale to run VDR on.
 # This affects sort options in recordings.
 # LANGUAGE="de_DE@euro"
+
+# If VDR restarts automatically, only do this number of restarts before giving up
+# Setting this to 0 will cancel any restart attempt of VDR
+MAXRESTARTS=5
+
+# Only count restart attempts where VDR did not run longer than # seconds
+# Setting this to 0 will never count restarts, and VDR can restart forever
+RESTARTTIME=10
 
 # Additional parameters to pass to VDR directly, without parsing:
 ADDPARAM=""

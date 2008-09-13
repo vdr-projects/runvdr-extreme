@@ -19,6 +19,7 @@ Some of the features of runvdr extreme:
 - All configuration accessible and overrideable from command line
 - All VDR options handled
 - Handles runvdr.pid file, acts on signals
+- Can launch an X server for output plugins
 - Restarts VDR in case of errors
 - Commands to restart VDR and reload DVB
 - Configuration file re-read on VDR restart
@@ -31,6 +32,7 @@ Some of the features of runvdr extreme:
 - Can switch console terminal
 - Can set locale for VDR daemon
 - Optionally supports pluginsetup-plugin
+- Optionally supports setup-plugin
 
 Additional features of runvdr-conf.d:
 

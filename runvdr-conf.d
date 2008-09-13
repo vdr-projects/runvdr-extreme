@@ -418,8 +418,22 @@ elif [ "$1" == "disable" ] ; then
 elif [ "$1" == "osdserver" ] ; then
     shift
     Command_Osdserver "$@"
+elif [ "$1" == "" -o "$1" == "help" ] ; then
+	cat << "ENDOFTEXT"
+Supported commands:
+runvdr-conf.d show [conf-name]
+    Show current config for one or all plugins
+runvdr-conf.d enable conf-name [--prio #]
+    Enable a plugin
+runvdr-conf.d disable conf-name
+    Disable a plugin
+runvdr-conf.d osdserver
+    Launch osdserver interface
+runvdr-conf.d help
+    This help
+ENDOFTEXT
 else
-    test
+    
     echo "Unknown command: $1" >&2
 fi
 

@@ -1,6 +1,12 @@
 runvdr extreme Revision History
 -------------------------------
 
+2008-09-14: Version 0.4.0
+- New: Start own X server for VDR to run in
+- New: Experimental support to read sysconfig file from setup-plugin, thx to dad401
+- New: Parameters to control automatic restart behavior
+- Fix: Made the init.d script LSB compliant, thx to Antonio for the hint.
+- Fix: Online help for runvdr-conf.d
 
 2008-03-02: Version 0.3.0
 - New: Support for the new VDR parameters --localedir and --userdump
