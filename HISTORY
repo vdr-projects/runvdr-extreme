@@ -1,6 +1,12 @@
 runvdr extreme Revision History
 -------------------------------
 
+2009-04-13: Version 0.4.1
+- Fix: Parsing sysconfig file
+- Fix: --xserver option not working, some weired options bugs fixed
+- New: AddParams xxx replaces ADDPARAM="xxx"
+- New: Internally building command line in bash array
+
 2008-09-14: Version 0.4.0
 - New: Start own X server for VDR to run in
 - New: Experimental support to read sysconfig file from setup-plugin, thx to dad401

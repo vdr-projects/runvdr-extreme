@@ -188,7 +188,8 @@ MAXRESTARTS=5
 RESTARTTIME=10
 
 # Additional parameters to pass to VDR directly, without parsing:
-ADDPARAM=""
+# Add them without extra quoting, like AddParams -a -b -c "Some Parameter"
+AddParams 
 
 # Command wrapper. Will be placed in front of the VDR command.
 # Example:

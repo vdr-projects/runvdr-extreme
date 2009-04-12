@@ -419,7 +419,7 @@ elif [ "$1" == "osdserver" ] ; then
     shift
     Command_Osdserver "$@"
 elif [ "$1" == "" -o "$1" == "help" ] ; then
-	cat << "ENDOFTEXT"
+    cat << "ENDOFTEXT"
 Supported commands:
 runvdr-conf.d show [conf-name]
     Show current config for one or all plugins

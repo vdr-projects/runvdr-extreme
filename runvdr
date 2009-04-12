@@ -25,7 +25,7 @@ SETTERM="setterm"
 # Options summary and conf file entries of runvdr:
 #
 # -C # --runvdr-conf=#   RUNVDRCONF       location of runvdr config file
-# --                     ADDPARAM         Additional parameters to pass to VDR
+# --                     ADDPARAMS        Additional parameters to pass to VDR
 # --pluginsetup-conf=#   PLUGINSETUPCONF  location of plugin-setup-runvdr.conf
 # --setupplugin-conf=#   SETUPPLUGINCONF  location of setup-plugin sysconfig
 # --vdr=#                VDRPRG           location and name of the vdr binary
@@ -89,7 +89,7 @@ which $SETTERM   >/dev/null || { echo missing $SETTERM... >&2 ; exit 1 ; }
 function ParseCommandLine_Step1() {
     # Parse command line, step 1
     # Stores pre-processed options in $OPTIONS
-    # evaluates -C and --runvdr-conf only
+    # evaluates -C, --runvdr-conf and --xserver-proxy only
 
     SHORTOPT="a:c:C:dD:E:g:hl:L:mp:P:r:s:t:u:v:Vw:"
     LONGOPT="runvdr-conf:,xserver-proxy:,pluginsetup-conf:,setupplugin-conf:,vdr:,\
@@ -100,25 +100,60 @@ function ParseCommandLine_Step1() {
         log:,localedir:,mute,no-kbd,plugin:,port:,rcu::,record:,shutdown:,\
         terminal:,user:,userdump,version,vfat,video:,watchdog:"
 
-
     # prepare all optios for later processing
     OPTIONS=`$GETOPT -o "$SHORTOPT" --long "$LONGOPT" -n "$0" -- "$@"` || exit 1
 
-    # evaluate only -C and --runvdr-conf
-    EARLYOPTIONS=`$GETOPT -q -o "C:" --long "runvdr-conf:,xserver-proxy:" -n "$0" -- "$@"`
-
-    eval set -- "$EARLYOPTIONS"
+    eval set -- "$OPTIONS"
 
     XSERVERPROXY=
     while true ; do case "$1" in
-        -C|--runvdr-conf)
-            RUNVDRCONF="$2"
-            shift 2
-            ;;
-        --xserver-proxy)
-            XSERVERPROXY="$2"
-            shift 2
-            ;;
+        -C|--runvdr-conf)  RUNVDRCONF="$2";  shift 2;;
+           --xserver-proxy) XSERVERPROXY="$2"; shift 2;;
+           --pluginsetup-conf)               shift 2;;
+           --setupplugin-conf)               shift 2;;
+           --vdr)                            shift 2;;
+           --switchterminal)                 shift 2;;
+           --xserver)                        shift 2;;
+           --runvdr-pid)                     shift 2;;
+           --dvb-load)                       shift 2;;
+           --dvb-unload)                     shift 2;;
+           --language)                       shift 2;;
+           --wrapper)                        shift 2;;
+           --term-timeout)                   shift 2;;
+           --kill-timeout)                   shift 2;;
+           --terminate)                      shift 2;;
+           --wait)                           shift 2;;
+           --restart)                        shift 2;;
+           --dvb-restart)                    shift 2;;
+           --maxrestarts)                    shift 2;;
+           --restarttime)                    shift 2;;
+        -h|--help)                           shift  ;;
+        -V|--version)                        shift  ;;
+
+        -a|--audio)                          shift 2;;
+        -c|--config)                         shift 2;;
+        -d|--daemon)                         shift  ;;
+        -D|--device)                         shift 2;;
+        -E|--epgfile)                        shift 2;;
+        -g|--grab)                           shift  ;;
+        -l|--log)                            shift 2;;
+        -L|--lib)                            shift 2;;
+           --lirc)                           shift 2;;
+           --localedir)                      shift 2;;
+        -m|--mute)                           shift  ;;
+           --no-kbd)                         shift  ;;
+        -p|--port)                           shift 2;;
+        -P|--plugin)                         shift 2;;
+           --rcu)                            shift 2;;
+        -r|--record)                         shift 2;;
+        -s|--shutdown)                       shift 2;;
+        -t|--terminal)                       shift 2;;
+        -u|--user)                           shift 2;;
+           --userdump)                       shift  ;;
+        -v|--video)                          shift 2;;
+           --vfat)                           shift  ;;
+        -w|--watchdog)                       shift 2;;
+
         --)
             shift
             break
@@ -133,6 +168,7 @@ function ParseCommandLine_Step1() {
 function Clean() {
     # Clean all config variables
     ADDPARAM=
+    ADDPARAMS=()
     PLUGINSETUPCONF=
     SETUPPLUGINCONF=
     VDRPRG=
@@ -238,6 +274,12 @@ function AddDevice() {
     fi
 }
 
+function AddParams() {
+    # Add to unparsed parameter list
+    for i ; do
+        ADDPARAMS[${#ADDPARAMS[*]}]="$i"
+    done
+}        
 
 function INCLUDE() {
     # include different conf file(s)
@@ -286,6 +328,9 @@ function LoadConfFile() {
     [ -z "$DVBRESTART" ] && DVBRESTART=0
     [ -z "$MAXRESTARTS" ] && MAXRESTARTS=5
     [ -z "$RESTARTTIME" ] && RESTARTTIME=10
+    
+    # Compatibility: Map old ADDPARAM to new AddParams
+    [ -n "$ADDPARAM" ] && eval "AddParams $ADDPARAM"
 
     return 0
 }
@@ -360,10 +405,7 @@ function ParseCommandLine_Step2() {
 
     # Add all remaining options directly to additional params
 
-    if [ -n "$1" ] ; then
-        [ -n "$ADDPARAM" ] && ADDPARAM="$ADDPARAM "
-        ADDPARAM="$ADDPARAM$@"
-    fi
+    AddParams "$@"
 
     return 0
 }
@@ -431,8 +473,18 @@ All runvdr parameters after '--' will be passed to VDR without modification
 END-OF-HELP
 }
 
+
+function AddCommandLine() {
+    # Add all parameters to command line array
+    for params ; do
+        VDRCOMMAND[${#VDRCOMMAND[*]}]="$params"
+    done
+}
+
 function BuildCommand() {
-    # Based on all options, build command line in $VDRCMD
+    # Based on all options, build command line in ${VDRCOMMAND[]}
+
+    VDRCOMMAND=()
 
     # complete command with path
     VDRPRG=`which "$VDRPRG"`
@@ -442,69 +494,66 @@ function BuildCommand() {
     fi
 
     # Build up command line:
-    VDRCMD="$VDRPRG"
-    [ -n "$ADDPARAM"  ] && VDRCMD="$VDRCMD $ADDPARAM"
-    [ -n "$WRAPPER"   ] && VDRCMD="$WRAPPER $VDRCMD"
 
-    [ -n "$AUDIO"     ] && VDRCMD="$VDRCMD -a \"$AUDIO\""
-    [ -n "$CONFIGDIR" ] && VDRCMD="$VDRCMD -c \"$CONFIGDIR\""
-    [ -n "$DAEMON"    ] && VDRCMD="$VDRCMD -d"
+    [ -n "$WRAPPER"   ] && AddCommandLine $WRAPPER
+    # No quotes around $WRAPPER!
+
+    AddCommandLine "$VDRPRG"
+
+    [ "${#ADDPARAMS[*]}" -gt 0 ] && AddCommandLine "${ADDPARAMS[@]}"
+
+    [ -n "$AUDIO"     ] && AddCommandLine -a "$AUDIO"
+    [ -n "$CONFIGDIR" ] && AddCommandLine -c "$CONFIGDIR"
+    [ -n "$DAEMON"    ] && AddCommandLine -d
 
     for i in "${DVBDEVICE[@]}" ; do
-        [ -n "$i" ] && VDRCMD="$VDRCMD -D $i"
+        [ -n "$i" ] && AddCommandLine -D "$i"
     done
 
-    [ -n "$EPGFILE"   ] && VDRCMD="$VDRCMD -E \"$EPGFILE\""
-    [ -n "$GRAB"      ] && VDRCMD="$VDRCMD -g $GRAB"
-    [ -n "$LOGLEVEL"  ] && VDRCMD="$VDRCMD -l $LOGLEVEL"
-    [ -n "$LIBDIR"    ] && VDRCMD="$VDRCMD -L $LIBDIR"
+    [ -n "$EPGFILE"   ] && AddCommandLine -E "$EPGFILE"
+    [ -n "$GRAB"      ] && AddCommandLine -g "$GRAB"
+    [ -n "$LOGLEVEL"  ] && AddCommandLine -l "$LOGLEVEL"
+    [ -n "$LIBDIR"    ] && AddCommandLine -L "$LIBDIR"
     case "$LIRC" in
-        1|"") VDRCMD="$VDRCMD --lirc";;
+        1|"") AddCommandLine --lirc";;
         0) ;;
-        *) VDRCMD="$VDRCMD --lirc=\"$LIRC\"";;
+        *) AddCommandLine --lirc=\"$LIRC\"";;
     esac
-    [ -n "$LOCALEDIR" ] && VDRCMD="$VDRCMD --localedir \"$LOCALEDIR\""
-    [ -n "$MUTE"      ] && VDRCMD="$VDRCMD -m"
-    [ -n "$NOKBD"     ] && VDRCMD="$VDRCMD --no-kbd"
-    [ -n "$SVDRPPORT" ] && VDRCMD="$VDRCMD -p $SVDRPPORT"
+    [ -n "$LOCALEDIR" ] && AddCommandLine --localedir "$LOCALEDIR"
+    [ -n "$MUTE"      ] && AddCommandLine -m
+    [ -n "$NOKBD"     ] && AddCommandLine --no-kbd
+    [ -n "$SVDRPPORT" ] && AddCommandLine -p "$SVDRPPORT"
 
     for p in "${PLUGINS[@]}" ; do
         if [ -n "$p" ] ; then
-            # do some shell quoting
-            p="${p//'\'/\\\\}"
-            p="${p//'\\'/\\\\}"
-            p="${p//\"/\\\"}"
-            p="${p//\$/\\\$}"
-            p="${p//\`/\\\`}"
-            VDRCMD="$VDRCMD -P \"$p\""
+            AddCommandLine -P "$p"
         fi
     done
 
     if [ -n "$PLUGINSETUPCONF" ] ; then
-        ALL_PLUGINS=`< $PLUGINSETUPCONF`
-        VDRCMD="$VDRCMD $ALL_PLUGINS"
+        eval "AddCommandLine `< $PLUGINSETUPCONF`"
     fi
 
     if [ -n "$SETUPPLUGINCONF" ] ; then
-        while read line ; do
-            [ "${line:0:11}" == "PLUGINLIST=" ] && VDRCMD="$VDRCMD ${line:11}"
+        while read -r line ; do
+            [ "${line:0:11}" == "PLUGINLIST=" ] && eval "eval \"AddCommandLine ${line:11}\""
         done < "$SETUPPLUGINCONF"
     fi
 
-    [ -n "$RECORDCMD" ] && VDRCMD="$VDRCMD -r \"$RECORDCMD\""
+    [ -n "$RECORDCMD" ] && AddCommandLine -r "$RECORDCMD"
     case "$RCU" in
-        1|"") VDRCMD="$VDRCMD --rcu";;
+        1|"") AddCommandLine --rcu;;
         0) ;;
-        *) VDRCMD="$VDRCMD --rcu=\"$RCU\"";;
+        *) AddCommandLine --rcu="$RCU";;
     esac
 
-    [ -n "$SHUTDOWN"  ] && VDRCMD="$VDRCMD -s \"$SHUTDOWN\""
-    [ -n "$TERMINAL"  ] && VDRCMD="$VDRCMD -t \"$TERMINAL\""
-    [ -n "$USER"      ] && VDRCMD="$VDRCMD -u \"$USER\""
-    [ -n "$USERDUMP"  ] && VDRCMD="$VDRCMD --userdump"
-    [ -n "$VFAT"      ] && VDRCMD="$VDRCMD --vfat"
-    [ -n "$VIDEODIR"  ] && VDRCMD="$VDRCMD -v \"$VIDEODIR\""
-    [ -n "$WATCHDOG"  ] && VDRCMD="$VDRCMD -w $WATCHDOG"
+    [ -n "$SHUTDOWN"  ] && AddCommandLine -s "$SHUTDOWN"
+    [ -n "$TERMINAL"  ] && AddCommandLine -t "$TERMINAL"
+    [ -n "$USER"      ] && AddCommandLine -u "$USER"
+    [ -n "$USERDUMP"  ] && AddCommandLine --userdump
+    [ -n "$VFAT"      ] && AddCommandLine --vfat
+    [ -n "$VIDEODIR"  ] && AddCommandLine -v "$VIDEODIR"
+    [ -n "$WATCHDOG"  ] && AddCommandLine -w "$WATCHDOG"
 
 
     [ -z "$TERMTIMEOUT" ] && TERMTIMEOUT=20
@@ -570,7 +619,9 @@ ParseCommandLine_Step1 "$@" || exit 1
 
 # Act as a proxy for calling VDR, from within X session
 if [ -n "$XSERVERPROXY" ] ; then
-    eval "$VDRCMD &"
+    # Unpack proxy command line
+    eval "VDRCOMMAND=($VDRCOMMANDPROXY)"
+    "${VDRCOMMAND[@]}" &
     PID=$!
     echo "PID $PID" > "$XSERVERPROXY"
     wait $PID
@@ -700,11 +751,11 @@ while (true) do
     # Remember start time
     STARTTIME=`$DATE +%s`
 
-    echo "$VDRCMD"
+    echo "${VDRCOMMAND[@]}"
 
     if [ -z "$XSERVER" ] ; then
         # Run VDR
-        eval "$VDRCMD &"
+        "${VDRCOMMAND[@]}" &
 
         # Remember PID of VDR process
         PID=$!
@@ -720,8 +771,12 @@ while (true) do
     else
         # Run X server that runs VDR
         PROXYFILE="/tmp/runvdr-$$"
-        rm "$PROXYFILE"
-        export VDRCMD
+        [ -f "$PROXYFILE" ] && rm "$PROXYFILE"
+        
+        # Pack command array into single env string:
+        export VDRCOMMANDPROXY=`printf '%q ' "${VDRCOMMAND[@]}"`
+        
+        # Fire up X server that calls back runvdr, and run into XSERVERPROXY there
         eval "xinit \""$0"\" --xserver-proxy=\""$PROXYFILE"\" -- $XSERVER &"
 
         # Remember X server PID
@@ -740,9 +795,10 @@ while (true) do
     # If proxy, read proxy return values
     if [ -n "$PROXYFILE" ] ; then
         while read var arg ; do case "$var" in
-            PID) PID="$arg" ; echo PID=$PID ;;
-            RET) RET="$arg" ; echo RET=$RET ;;
+            PID) PID="$arg";;
+            RET) RET="$arg";;
         esac ; done < "$PROXYFILE"
+        rm "$PROXYFILE"
     fi
 
     # Remember stop time

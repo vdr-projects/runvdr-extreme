@@ -72,7 +72,7 @@ case "$1" in
     d_reload
     echo "."
   ;;
-  dvb-reload)
+  dvb-reload|dvb-restart)
     echo -n "Reloading $DESC configuration"
     d_dvb_reload
     echo "."
