@@ -32,11 +32,15 @@ VDRPRG="/usr/local/bin/vdr"
 # Command to load the DVB drivers
 # DVBLOAD will be launched before VDR starts and whenever the drivers
 # need to be reloaded.
-DVBLOAD=''
+#function DVBLOAD() {
+#    modprobe ....
+#}
 
 # Command to unload the DVB drivers
 # DVBUNLOAD will be launched whenever the drivers need to be reloaded.
-DVBUNLOAD=''
+#function DVBUNLOAD() {
+#    rmmod ....
+#}
 
 # Use VIDEODIR as video directory. The default is /video.
 VIDEODIR="/video"
@@ -78,7 +82,7 @@ AddPlugin
 AddPlugin
 
 # Search for plugins in directory LIBDIR. Default is ./PLUGINS/lib.
-LIBDIR=
+LIBDIR=""
 
 # If you use PluginSetup: Where is the the plugin_setup_runvdr.conf file?
 # PLUGINSETUPCONF="$CONFIGDIR/plugins/plugin_setup_runvdr.conf"
@@ -164,12 +168,23 @@ VFAT=
 # Fire up own X server as output device
 # XSERVER="/usr/bin/X -nolisten tcp -config /etc/X11/xorg-runvdr.conf :0"
 
+# X startup commands, called within the X server
+#function XSTARTUP() {
+#    while true ; do sleep 5; vdr-sxfe; done &
+#    SXFEPID=$!
+#}
+
+# X shutdown commands, called within the X server
+#function XSHUTDOWN() {
+#    kill $SXFEPID
+#}
+
 # Store PID of runvdr into a file?
 # RUNVDRPID=~/.runvdr.pid
 RUNVDRPID=/var/run/runvdr.pid
 
 # Set the controlling terminal. For example, /dev/tty8
-TERMINAL=/dev/tty8
+TERMINAL="/dev/tty8"
 
 # Switch console to some terminal? Needs terminal number. 
 # For example, SWITCHTERMINAL=8
@@ -179,6 +194,9 @@ SWITCHTERMINAL=8
 # This affects sort options in recordings.
 # LANGUAGE="de_DE@euro"
 
+# Set character set that VDR shoud use
+# VDR_CHARSET_OVERRIDE="ISO-8859-15"
+
 # If VDR restarts automatically, only do this number of restarts before giving up
 # Setting this to 0 will cancel any restart attempt of VDR
 MAXRESTARTS=5
@@ -186,6 +204,10 @@ MAXRESTARTS=5
 # Only count restart attempts where VDR did not run longer than # seconds
 # Setting this to 0 will never count restarts, and VDR can restart forever
 RESTARTTIME=10
+
+# Should we unload the DVB driver when finally exiting runvdr?
+# If not set, or set to 0, exit without unloading drivers
+DVBUNLOADONEXIT=
 
 # Additional parameters to pass to VDR directly, without parsing:
 # Add them without extra quoting, like AddParams -a -b -c "Some Parameter"

@@ -1,12 +1,28 @@
 #!/bin/bash
 #
-#  runvdr extreme
+#  runvdr extreme - configurable vdr launcher script
 #
-#  configurable vdr launcher script
+#  Copyright (C) 2006-2009 by Udo Richter
 #
-#      by Udo Richter <udo_richter(a)gmx.de>
-#      http://www.richter-udo.de/vdr/scripts.html#runvdr
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
 #
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+# Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+#
+# The author can be reached at <udo_richter(a)gmx.de>
+#
+# The project's page is at http://www.udo-richter.de/vdr/scripts.html#runvdr
+
 
 RUNVDRCONF=""
 
@@ -35,6 +51,9 @@ SETTERM="setterm"
 # --runvdr-pid=#         RUNVDRPID        location of runvdr.pid file
 # --dvb-load=#           DVBLOAD          command to load DVB drivers
 # --dvb-unload=#         DVBUNLOAD        command to unload DVB drivers
+# --dvb-unload-on-exit   DVBUNLOADONEXIT  do unload DVB drivers on exit
+# --x-startup=#          XSTARTUP         command executed after X startup
+# --x-shutdown=#         XSHUTDOWN        command executed before X shutdown
 # --wrapper=#            WRAPPER          wrapper command for calling vdr
 # --terminate[=#]        TERMINATE        Terminate runvdr by pid
 # --wait[=#]             WAIT             Wait # seconds for --terminate to finish
@@ -45,6 +64,7 @@ SETTERM="setterm"
 # --maxrestarts=#        MAXRESTARTS      Max number of rapid restarts before give-up
 # --restarttime=#        RESTARTTIME      Max time for restart to be rapid
 # --language=#           LANGUAGE         Locale to set for VDR
+# --charset-override=#   VDR_CHARSET_OVERRIDE Override VDR charset
 # -V --version           VERSION          print version information and exit
 # -h --help              HELP             print this help and exit
 #
@@ -59,6 +79,7 @@ SETTERM="setterm"
 #  -L #  --lib #       LIBDIR           search for plugins in DIR (default is %s)
 #        --lirc #?     LIRC             use a LIRC remote control device, attached to PATH
 #        --localedir # LOCALEDIR        search for locale files in DIR
+#  -i #  --instance #  INSTANCE         use ID as the id of this VDR instance
 #  -l #  --log #       LOGLEVEL         set log level (default: 3)
 #  -m    --mute        MUTE             mute audio of the primary DVB device at startup
 #        --no-kbd      NOKBD            don't use the keyboard as an input device
@@ -91,13 +112,14 @@ function ParseCommandLine_Step1() {
     # Stores pre-processed options in $OPTIONS
     # evaluates -C, --runvdr-conf and --xserver-proxy only
 
-    SHORTOPT="a:c:C:dD:E:g:hl:L:mp:P:r:s:t:u:v:Vw:"
+    SHORTOPT="a:c:C:dD:E:g:hi:l:L:mp:P:r:s:t:u:v:Vw:"
     LONGOPT="runvdr-conf:,xserver-proxy:,pluginsetup-conf:,setupplugin-conf:,vdr:,\
         switchterminal:,maxrestarts:,restarttime:,xserver:,\
-        runvdr-pid:,dvb-load:,dvb-unload:,language:,wrapper:,\
+        runvdr-pid:,dvb-load:,dvb-unload:,dvb-unload-on-exit,x-startup:,\
+        x-shutdown:,language:,charset-override:,wrapper:,\
         term-timeout:,kill-timeout:,terminate::,restart::,dvb-restart::,\
         wait::,audio:,config:,daemon,device:,epgfile:,grab:,help,lib:,lirc::,\
-        log:,localedir:,mute,no-kbd,plugin:,port:,rcu::,record:,shutdown:,\
+        instance:,log:,localedir:,mute,no-kbd,plugin:,port:,rcu::,record:,shutdown:,\
         terminal:,user:,userdump,version,vfat,video:,watchdog:"
 
     # prepare all optios for later processing
@@ -117,7 +139,11 @@ function ParseCommandLine_Step1() {
            --runvdr-pid)                     shift 2;;
            --dvb-load)                       shift 2;;
            --dvb-unload)                     shift 2;;
+           --dvb-unload-on-exit)             shift  ;;
+           --x-startup)                      shift 2;;
+           --x-shutdown)                     shift 2;;
            --language)                       shift 2;;
+           --charset-override)               shift 2;;
            --wrapper)                        shift 2;;
            --term-timeout)                   shift 2;;
            --kill-timeout)                   shift 2;;
@@ -136,6 +162,7 @@ function ParseCommandLine_Step1() {
         -D|--device)                         shift 2;;
         -E|--epgfile)                        shift 2;;
         -g|--grab)                           shift  ;;
+        -i|--instance)                       shift 2;;
         -l|--log)                            shift 2;;
         -L|--lib)                            shift 2;;
            --lirc)                           shift 2;;
@@ -177,7 +204,11 @@ function Clean() {
     RUNVDRPID=
     DVBLOAD=
     DVBUNLOAD=
+    DVBUNLOADONEXIT=
+    XSTARTUP=
+    XSHUTDOWN=
     LANGUAGE=
+    VDR_CHARSET_OVERRIDE=
     WRAPPER=
     TERMTIMEOUT=
     KILLTIMEOUT=
@@ -196,6 +227,7 @@ function Clean() {
     DVBDEVICE=()
     EPGFILE=
     GRAB=
+    INSTANCE=
     LIBDIR=
     LIRC=
     LOGLEVEL=
@@ -277,7 +309,7 @@ function AddDevice() {
 function AddParams() {
     # Add to unparsed parameter list
     for i ; do
-        ADDPARAMS[${#ADDPARAMS[*]}]="$i"
+    	ADDPARAMS[${#ADDPARAMS[*]}]="$i"
     done
 }        
 
@@ -354,7 +386,11 @@ function ParseCommandLine_Step2() {
            --runvdr-pid)   RUNVDRPID="$2";   shift 2;;
            --dvb-load)     DVBLOAD="$2";     shift 2;;
            --dvb-unload)   DVBUNLOAD="$2";   shift 2;;
+           --dvb-unload-on-exit) DVBUNLOADONEXIT=1; shift  ;;
+           --x-startup)    XSTARTUP="$2";    shift 2;;
+           --x-shutdown)   XSHUTDOWN="$2";   shift 2;;
            --language)     LANGUAGE="$2";    shift 2;;
+           --charset-override) VDR_CHARSET_OVERRIDE="$2"; shift 2;;
            --wrapper)      WRAPPER="$2";     shift 2;;
            --term-timeout) TERMTIMEOUT="$2"; shift 2;;
            --kill-timeout) KILLTIMEOUT="$2"; shift 2;;
@@ -374,6 +410,7 @@ function ParseCommandLine_Step2() {
         -D|--device)       AddDevice "$2"; shift 2;;
         -E|--epgfile)      EPGFILE="$2";   shift 2;;
         -g|--grab)         GRAB="1";       shift  ;;
+        -i|--instance)     INSTANCE="$2";  shift 2;;
         -l|--log)          LOGLEVEL="$2";  shift 2;;
         -L|--lib)          LIBDIR="$2";    shift 2;;
            --lirc)         LIRC="$2";      shift 2;;
@@ -405,7 +442,7 @@ function ParseCommandLine_Step2() {
 
     # Add all remaining options directly to additional params
 
-    AddParams "$@"
+	AddParams "$@"
 
     return 0
 }
@@ -426,8 +463,12 @@ runvdr Options:
 --runvdr-pid=#        location of runvdr.pid file
 --dvb-load=#          command to load DVB drivers
 --dvb-unload=#        command to unload DVB drivers
+--dvb-unload-on-exit  do unload DVB drivers on exit
+--x-startup=#         command executed after X startup
+--x-shutdown=#        command executed before X shutdown
 --wrapper=#           wrapper command for calling vdr
 --language=#          Locale to set for VDR
+--charset-override=#  Override VDR charset
 --terminate[=#]       Terminate runvdr by pid
 --wait[=#]            Wait # seconds for --terminate to finish
 --restart[=#]         Send restart signal by pid
@@ -449,6 +490,7 @@ Parsed VDR options:
                    Use '-x' to ignore device x from config file
 -E # --epgfile=#   write the EPG data into the given FILE. - to disable.
 -g # --grab=#      write images from the SVDRP command GRAB into the given DIR
+-i # --instance=#  use ID as the id of this VDR instance
 -L # --lib=#       search for plugins in DIR
      --lirc[=#]    use a LIRC remote control device, attached to PATH
      --localedir=# search for locale files in DIR
@@ -477,7 +519,7 @@ END-OF-HELP
 function AddCommandLine() {
     # Add all parameters to command line array
     for params ; do
-        VDRCOMMAND[${#VDRCOMMAND[*]}]="$params"
+    	VDRCOMMAND[${#VDRCOMMAND[*]}]="$params"
     done
 }
 
@@ -512,12 +554,13 @@ function BuildCommand() {
 
     [ -n "$EPGFILE"   ] && AddCommandLine -E "$EPGFILE"
     [ -n "$GRAB"      ] && AddCommandLine -g "$GRAB"
+    [ -n "$INSTANCE"  ] && AddCommandLine -i "$INSTANCE"
     [ -n "$LOGLEVEL"  ] && AddCommandLine -l "$LOGLEVEL"
     [ -n "$LIBDIR"    ] && AddCommandLine -L "$LIBDIR"
     case "$LIRC" in
-        1|"") AddCommandLine --lirc";;
+        1|"") AddCommandLine --lirc;;
         0) ;;
-        *) AddCommandLine --lirc=\"$LIRC\"";;
+        *) AddCommandLine --lirc="$LIRC";;
     esac
     [ -n "$LOCALEDIR" ] && AddCommandLine --localedir "$LOCALEDIR"
     [ -n "$MUTE"      ] && AddCommandLine -m
@@ -607,6 +650,41 @@ function WaitKill() {
     echo failed.
 }
 
+# Helper functions for callbacks
+
+function Do_DVBLOAD() {
+    if [ -n "$DVBLOAD" ] ; then
+        eval "$DVBLOAD"
+    elif [ "`type -t DVBLOAD`" = "function" ] ; then
+        DVBLOAD
+    fi
+}
+
+function Do_DVBUNLOAD() {
+    if [ -n "$DVBUNLOAD" ] ; then
+        eval "$DVBUNLOAD"
+    elif [ "`type -t DVBUNLOAD`" = "function" ] ; then
+        DVBUNLOAD
+    fi
+}
+
+function Do_XSTARTUP() {
+    if [ -n "$XSTARTUP" ] ; then
+        eval "$XSTARTUP"
+    elif [ "`type -t XSTARTUP`" = "function" ] ; then
+        XSTARTUP
+    fi
+}
+
+function Do_XSHUTDOWN() {
+    # X shutdown command
+    if [ -n "$XSHUTDOWN" ] ; then
+        eval "$XSHUTDOWN"
+    elif [ "`type -t XSHUTDOWN`" = "function" ] ; then
+        XSHUTDOWN
+    fi
+}
+
 
 
 #### ---------------
@@ -619,6 +697,8 @@ ParseCommandLine_Step1 "$@" || exit 1
 
 # Act as a proxy for calling VDR, from within X session
 if [ -n "$XSERVERPROXY" ] ; then
+    # X startup command
+    Do_XSTARTUP
     # Unpack proxy command line
     eval "VDRCOMMAND=($VDRCOMMANDPROXY)"
     "${VDRCOMMAND[@]}" &
@@ -626,6 +706,8 @@ if [ -n "$XSERVERPROXY" ] ; then
     echo "PID $PID" > "$XSERVERPROXY"
     wait $PID
     echo "RET $?" >> "$XSERVERPROXY"
+    # X shutdown command
+    Do_XSHUTDOWN
     exit 0
 fi
 
@@ -645,7 +727,7 @@ if [ -n "$HELP" ] ; then
 fi
 
 if [ -n "$VERSION" ] ; then
-    echo "runvdr extreme version 0.4.0"
+    echo "runvdr extreme version 0.4.2"
     exit 0
 fi
 
@@ -726,7 +808,7 @@ fi
 
 
 # Load driver if it hasn't been loaded already:
-eval "$DVBLOAD"
+Do_DVBLOAD
 
 # Count how often VDR terminated very quickly
 SHORTRUNTIMES=0
@@ -775,6 +857,10 @@ while (true) do
         
         # Pack command array into single env string:
         export VDRCOMMANDPROXY=`printf '%q ' "${VDRCOMMAND[@]}"`
+        export XSTARTUP
+        export XSHUTDOWN
+        [ "`type -t XSTARTUP`" = "function" ] && export -f XSTARTUP
+        [ "`type -t XSHUTDOWN`" = "function" ] && export -f XSHUTDOWN
         
         # Fire up X server that calls back runvdr, and run into XSERVERPROXY there
         eval "xinit \""$0"\" --xserver-proxy=\""$PROXYFILE"\" -- $XSERVER &"
@@ -822,6 +908,12 @@ while (true) do
         # Kill remaining VDR traces
         WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
 
+        # Wait for X server to be down too
+        [ "$XSERVERPID" ] && wait "$XSERVERPID"
+
+        # Unload DVB drivers requested?
+        [ -n "$DVBUNLOADONEXIT" ] && Do_DVBUNLOAD
+
         # and exit
         break
         ;;
@@ -846,8 +938,8 @@ while (true) do
         [ "$XSERVERPID" ] && wait "$XSERVERPID"
 
         # reload DVB stuff
-        eval "$DVBUNLOAD"
-        eval "$DVBLOAD"
+        Do_DVBUNLOAD
+        Do_DVBLOAD
         ;;
       *)  # Non-signal termination
         if [ $RET -eq 0 -o $RET -eq 2 ] ; then
@@ -855,6 +947,12 @@ while (true) do
 
             # Kill remaining VDR traces
             WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
+
+            # Wait for X server to be down too
+            [ "$XSERVERPID" ] && wait "$XSERVERPID"
+
+            # Unload DVB drivers requested?
+            [ -n "$DVBUNLOADONEXIT" ] && Do_DVBUNLOAD
 
             # and exit
             break
@@ -864,6 +962,12 @@ while (true) do
 
             # Kill remaining VDR traces
             WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
+
+            # Wait for X server to be down too
+            [ "$XSERVERPID" ] && wait "$XSERVERPID"
+
+            # Unload DVB drivers requested?
+            [ -n "$DVBUNLOADONEXIT" ] && Do_DVBUNLOAD
 
             # and exit
             break;
@@ -877,8 +981,8 @@ while (true) do
         [ "$XSERVERPID" ] && wait "$XSERVERPID"
 
         # reload DVB
-        eval "$DVBUNLOAD"
-        eval "$DVBLOAD"
+        Do_DVBUNLOAD
+        Do_DVBLOAD
 
         # and loop
         ;;

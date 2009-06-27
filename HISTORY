@@ -1,6 +1,14 @@
 runvdr extreme Revision History
 -------------------------------
 
+2009-06-28: Version 0.4.2
+- New: Support -i and --instance of VDR-1.7.4+
+- New: Command line option to set VDR_CHARSET_OVERRIDE of VDR 1.5.18+
+- New: Function-style callbacks for DVB load/unload commands (backwards compatible)
+- New: Option to always unload DVB drivers on exit
+- New: Callbacks for X-Server startup and shutdown to run additional programs
+- Fix: --lirc not working. Thx to caps!
+
 2009-04-13: Version 0.4.1
 - Fix: Parsing sysconfig file
 - Fix: --xserver option not working, some weired options bugs fixed

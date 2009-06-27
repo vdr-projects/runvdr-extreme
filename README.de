@@ -57,7 +57,7 @@ per Kommandozeile verfügbar, siehe runvdr --help.
 
 Für das init-Skript (Debian):
 - Kopiere init.d.runvdr.Debian nach /etc/init.d/runvdr
-- Benutze update-rc.d um die Start-Runlevel zu konfigurieren.
+- Benutze sysv-rc-conf oder update-rc.d um die Start-Runlevel zu konfigurieren.
 
 Für runvdr-conf.d:
 - Kopiere runvdr-conf.d nach /usr/local/bin/
