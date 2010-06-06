@@ -3,6 +3,8 @@ runvdr extreme Revision History
 
 xxxx-xx-xx:
 - Fix: Debian init script: Pull default locale
+- Fix: Fail to load if AddPlugin is last in runvdr.conf
+- Fix: Error message if runvdr.conf fails
 
 2009-06-28: Version 0.4.2
 - New: Support -i and --instance of VDR-1.7.4+

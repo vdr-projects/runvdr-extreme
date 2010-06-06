@@ -265,6 +265,7 @@ function AddPluginString() {
     else
         [ -n "$1" ] && PLUGINS[${#PLUGINS[*]}]="$1";
     fi
+    return 0
 }
 function AddPlugin() {
     # add $* as plugin, do shell quoting
@@ -340,7 +341,7 @@ function LoadConfFile() {
     fi
     if [ -n "$RUNVDRCONF" ] ; then
         if [ -r "$RUNVDRCONF" ] ; then
-            . "$RUNVDRCONF" || exit 1
+            . "$RUNVDRCONF" || { echo "runvdr: $RUNVDRCONF returned with $?." >&2 ; exit 1 ; }
         else
             echo "runvdr: $RUNVDRCONF not found." >&2
         fi
