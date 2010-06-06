@@ -24,6 +24,7 @@
 # The project's page is at http://www.udo-richter.de/vdr/scripts.html#runvdr
 
 
+RUNVDR="${0##*/}"
 RUNVDRCONF=""
 
 
@@ -333,6 +334,12 @@ function LoadConfFile() {
     VDRUSER=""
     # Old option, supported for compatibility only
 
+    if [ -z "$RUNVDRCONF" -a -r ~/.$RUNVDR.conf ] ; then
+        RUNVDRCONF=~/.$RUNVDR.conf
+    fi
+    if [ -z "$RUNVDRCONF" -a -r /etc/$RUNVDR.conf ] ; then
+        RUNVDRCONF=/etc/$RUNVDR.conf
+    fi
     if [ -z "$RUNVDRCONF" -a -r ~/.runvdr.conf ] ; then
         RUNVDRCONF=~/.runvdr.conf
     fi
