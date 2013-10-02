@@ -2,7 +2,8 @@
 #
 #  runvdr extreme - configurable vdr launcher script
 #
-#  Copyright (C) 2006-2009 by Udo Richter
+#  Copyright (C) 2006-2009 Udo Richter
+#                2013      Manuel Reimer
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,7 +20,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 # Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 #
-# The author can be reached at <udo_richter(a)gmx.de>
+# The authors can be reached at <udo_richter(a)gmx.de>
+#                               <manuel.reimer@gmx.de>
 #
 # The project's page is at
 # http://projects.vdr-developer.org/projects/runvdr-extreme
