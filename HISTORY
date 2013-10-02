@@ -3,6 +3,7 @@ runvdr extreme Revision History
 
 201x-xx-xx: Version 0.5.0
 - Fix: VDR_CHARSET_OVERRIDE now is correctly exported to the VDR process
+- Fix: Fixed problem with closed STDOUT with newer versions of "ps"
 
 2009-06-28: Version 0.4.2
 - New: Support -i and --instance of VDR-1.7.4+
