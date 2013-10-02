@@ -632,10 +632,10 @@ function WaitKill() {
     GetChilds "$1" "$2"
 
     echo -n "Sending ${#childlist[*]} processes the TERM signal."
-    $KILL -TERM ${childlist[*]} >&- 2>&-
+    $KILL -TERM ${childlist[*]} 2>/dev/null
 
     for ((i=0;i<$3;i++)) ; do
-        $PS ${childlist[*]} >&- 2>&- || { echo terminated. ; return ; }
+        $PS ${childlist[*]} >/dev/null || { echo terminated. ; return ; }
 
         echo -n .
         $SLEEP 1
@@ -643,10 +643,10 @@ function WaitKill() {
     echo
 
     echo -n "Sending ${#childlist[*]} processes the KILL signal."
-    $KILL -KILL ${childlist[*]} >&- 2>&-
+    $KILL -KILL ${childlist[*]} 2>/dev/null
 
     for ((i=0;i<$4;i++)) ; do
-        $PS ${childlist[*]} >&- 2>&- || { echo terminated. ; return ; }
+        $PS ${childlist[*]} >/dev/null || { echo terminated. ; return ; }
         echo -n .
         $SLEEP 1
     done
@@ -749,7 +749,7 @@ if [ "$TERMINATE" != "0" ] ; then
         echo -n "Terminating runvdr (PID=$TERMINATE)"
         $KILL -TERM $TERMINATE
         while [ -z "$WAIT" ] || [ "$WAIT" -gt 0 ] ; do
-            $PS $TERMINATE >&- || { echo done ; break ; }
+            $PS $TERMINATE >/dev/null || { echo done ; break ; }
             echo -n "."
             $SLEEP 1
             [ -n "$WAIT" ] && let WAIT=WAIT-1
@@ -1006,7 +1006,7 @@ while (true) do
 done
 
 # Clean up PID file
-[ -n "$RUNVDRPID" ] && rm $RUNVDRPID >&- 2>&-
+[ -n "$RUNVDRPID" ] && rm $RUNVDRPID 2>/dev/null
 
 # Clean up proxy file, if used
-[ -n "$PROXYFILE" ] && rm $PROXYFILE >&- 2>&-
+[ -n "$PROXYFILE" ] && rm $PROXYFILE 2>/dev/null
