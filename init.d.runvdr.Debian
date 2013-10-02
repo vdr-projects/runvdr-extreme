@@ -33,7 +33,7 @@ test -x $DAEMON || exit 0
 #
 d_start() {
     start-stop-daemon --start --background --quiet --pidfile $PIDFILE \
-        --exec $DAEMON -- 
+        --exec $DAEMON --
 }
 
 #

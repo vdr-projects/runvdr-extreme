@@ -314,7 +314,7 @@ function AddParams() {
     for i ; do
     	ADDPARAMS[${#ADDPARAMS[*]}]="$i"
     done
-}        
+}
 
 function INCLUDE() {
     # include different conf file(s)
@@ -363,7 +363,7 @@ function LoadConfFile() {
     [ -z "$DVBRESTART" ] && DVBRESTART=0
     [ -z "$MAXRESTARTS" ] && MAXRESTARTS=5
     [ -z "$RESTARTTIME" ] && RESTARTTIME=10
-    
+
     # Compatibility: Map old ADDPARAM to new AddParams
     [ -n "$ADDPARAM" ] && eval "AddParams $ADDPARAM"
 
@@ -857,14 +857,14 @@ while (true) do
         # Run X server that runs VDR
         PROXYFILE="/tmp/runvdr-$$"
         [ -f "$PROXYFILE" ] && rm "$PROXYFILE"
-        
+
         # Pack command array into single env string:
         export VDRCOMMANDPROXY=`printf '%q ' "${VDRCOMMAND[@]}"`
         export XSTARTUP
         export XSHUTDOWN
         [ "`type -t XSTARTUP`" = "function" ] && export -f XSTARTUP
         [ "`type -t XSHUTDOWN`" = "function" ] && export -f XSHUTDOWN
-        
+
         # Fire up X server that calls back runvdr, and run into XSERVERPROXY there
         eval "xinit \""$0"\" --xserver-proxy=\""$PROXYFILE"\" -- $XSERVER &"
 
@@ -1010,5 +1010,3 @@ done
 
 # Clean up proxy file, if used
 [ -n "$PROXYFILE" ] && rm $PROXYFILE >&- 2>&-
-
-

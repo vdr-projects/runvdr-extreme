@@ -32,17 +32,17 @@ function ConnectServer() {
     exec 3<> /tmp/pipe-in$$
     exec 4<> /tmp/pipe-out$$
     rm /tmp/pipe-in$$ /tmp/pipe-out$$
-    
+
     # Connect to server using the fifo
-    { 
+    {
         netcat $1 $2
-        
+
         # In case of connection loss:
         echo 499 disconnected
         echo 202 Good Bye.
     } <&3 >&4 &
     pid=$!
-    
+
     # Sending to the server: use >&3
     # Receive from the server: use <&4
 }
@@ -60,7 +60,7 @@ function ReadReply() {
     while read -r code line <&4 ; do
         if [ "$OSDSERVER_DEBUG" ] ; then echo "< $code $line" ; fi
         # screen echo
-        
+
         case $code in
             2*)     IFS=$' \t\n\r' reply2xx=($code "$line")
                     ;;
@@ -106,19 +106,19 @@ function IsEvent() {
 function QuoteString() {
     # Quote arbitrary string for use in '' and ""
     local str="${!1}"
-    
+
     str="${str//'\'/\\\\}"
     str="${str//'\\'/\\\\}"
     # work around bash bug: double quoted '\'
-    
+
     str="${str//\'/$'\\\''}"
     # This is bogus, anyone knows something better to replace ' by \' ?
-    
+
     str="${str//\"/\\\"}"
     str="${str//$'\r'/\\r}"
     str="${str//$'\n'/\\n}"
     str="${str//$'\t'/\\t}"
-    
+
     eval "$1=\$str"
 }
 
@@ -145,7 +145,7 @@ function GetConfInfo() {
     defaultprio=50
     loaded=""
     local tmp
-    
+
     if [ ! -f "$ALLSCRIPTS/$1" ] ; then
         return 1
     fi
@@ -168,14 +168,14 @@ function GetConfInfo() {
     if [ -z "$name" ] ; then
         return 1
     fi
-    
+
     tmp=("$ACTIVESCRIPTS"/[0-9][0-9]"$1")
     tmp="${tmp[0]}"
     if [ -f "$tmp" ] ; then
         tmp="${tmp:${#ACTIVESCRIPTS}+1}"
         loaded="${tmp:0:2}"
     fi
-    
+
     return 0
 }
 
@@ -203,10 +203,10 @@ function GetAllConfInfo() {
 
 function Command_Show() {
     GetAllConfInfo "$1"
-    
+
     local i;
     for ((i=0;i<confs;i++)) ; do
-        if [ $i -ne 0 ] ; then 
+        if [ $i -ne 0 ] ; then
             echo
         fi
         echo "Plugin short name: ${confs_short[i]}"
@@ -227,7 +227,7 @@ function Command_Enable() {
     if [ -z "$newloaded" ] ; then
         newloaded="$defaultprio"
     fi
-    
+
     if [ "$2" == "--prio" ] ; then
         newloaded="$3"
         while [ "${newloaded# }" != "$newloaded" ] ; do newloaded="${newloaded# }" ; done
@@ -275,28 +275,28 @@ function Osdserver_edit() {
         enable="No"
         loaded="$defaultprio"
     fi
-    
+
     SendCmd "enterlocal" || return $false
     # Preserve global variable space, so we can re-use 'menu'
-    
+
     SendCmd "menu=New Menu 'Edit $name'" || return $false
     SendCmd "menu.SetColumns 15" || return $false
     SendCmd "menu.EnableEvent keyOk close" || return $false
-    
+
     SendCmd "menu.AddNew OsdItem -unselectable 'Short name:\\t$short'" || return $false
-    
+
     SendCmd "menu.AddNew OsdItem -unselectable 'Long name:\\t$name'" || return $false
-    
+
     SendCmd "menu.AddNew OsdItem -unselectable 'Default priority:\\t$defaultprio'" || return $false
-    
+
     SendCmd "enable=menu.AddNew EditListItem Enabled No Yes -SelectName '$enable'" || return $false
     SendCmd "enable.SetCurrent" || return $false
-    
+
     SendCmd "prio=menu.AddNew EditIntItem -min 0 -max 99 'Current priority:' '$loaded'" || return $false
-    
+
     SendCmd "_focus.addsubmenu menu" || return $false
     SendCmd "menu.show" || return $false
-    
+
     while true; do
         SendCmd "menu.SleepEvent" || return $false
 
@@ -304,11 +304,11 @@ function Osdserver_edit() {
             SendCmd "enable.GetValue -name" || return $false
             [ "${reply6xx[0]}" != 600 ] && return $false
             enable="${reply6xx[1]}"
-            
+
             SendCmd "prio.GetValue" || return $false
             [ "${reply6xx[0]}" != 600 ] && return $false
             prio="${reply6xx[1]}"
-            
+
             if [ "$enable" == "Yes" ] ; then
                 Command_Enable "$short" --prio "$prio"
                 confs_loaded[$1]="$prio"
@@ -316,26 +316,26 @@ function Osdserver_edit() {
                 Command_Disable "$short"
                 confs_loaded[$1]=""
             fi
-            
+
             SendCmd "menu.SendState osBack" || return $false
-            SendCmd "delete menu" || return $false    
-            SendCmd "leavelocal" || return $false    
-            
+            SendCmd "delete menu" || return $false
+            SendCmd "leavelocal" || return $false
+
             return $true
         fi
         if IsEvent menu close ; then
-            SendCmd "delete menu" || return $false    
-            SendCmd "leavelocal" || return $false    
+            SendCmd "delete menu" || return $false
+            SendCmd "leavelocal" || return $false
             return $true
         fi
-    done   
+    done
 }
 
 function Osdserver_main() {
     SendCmd "menu=New Menu 'Runvdr config'" || return $false
     SendCmd "menu.SetColumns 5" || return $false
     SendCmd "menu.EnableEvent close" || return $false
-    
+
     local i;
     local min=0
     local prio
@@ -344,7 +344,7 @@ function Osdserver_main() {
         for ((i=0;i<confs;i++)) ; do
             prio="${confs_defaultprio[i]}"
             if [ -n "${confs_loaded[i]}" ] ; then prio=${confs_loaded[i]} ; fi
-            
+
             if [ "$prio" -eq "$min" ] ; then
                 SendCmd "conf$i=menu.AddNew OsdItem '${confs_loaded[i]:---}\t${confs_name[i]}'" || return $false
                 SendCmd "conf$i.EnableEvent keyOk" || return $false
@@ -355,16 +355,16 @@ function Osdserver_main() {
         done
         min="$nextmin"
     done
-    
+
     SendCmd "menu.Show" || return $false
-    
+
     while true ; do
         SendCmd "menu.SleepEvent" || return $false
-        
-        if IsEvent menu close ; then    
+
+        if IsEvent menu close ; then
             return $true
         fi
-        
+
         if [ "${reply3xx[1]:0:4}" == "conf" -a "${reply3xx[2]}" == "keyOk" ] ; then
             i="${reply3xx[1]:4}"
             Osdserver_edit "$i" || return $false
@@ -376,22 +376,22 @@ function Osdserver_main() {
 
 function Osdserver_connect() {
     GetAllConfInfo
-    
+
     ConnectServer localhost 2010
     # Connect to the server process
-    
+
     ReadReply || error
     # Read server welcome
-    
+
     SendCmd "Version 0.1" || error
     # Identify to server with protocol version
-    
+
     Osdserver_main || error
     # Main menu
-    
+
     SendCmd Quit
     # ... and good bye
-    
+
     exec 3>&-
     exec 4>&-
     # close FIFOs
@@ -433,6 +433,5 @@ runvdr-conf.d help
     This help
 ENDOFTEXT
 else
-    
     echo "Unknown command: $1" >&2
 fi

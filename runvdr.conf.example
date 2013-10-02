@@ -51,7 +51,7 @@ CONFIGDIR="/video"
 
 # Location of locale files for VDR 1.5.14 and newer. Default is to use
 # the builtin "./locale" or whatever was compiled as LOCDIR into VDR.
-# 
+#
 # LOCALEDIR="/usr/src/vdr/locale"
 
 ##### -----------
@@ -66,7 +66,7 @@ CONFIGDIR="/video"
 #
 #   AddPlugin hello -b -a "A B C"
 #
-# which would load a plugin named "hello", giving it the three 
+# which would load a plugin named "hello", giving it the three
 # command line options "-b", "-a" and "A B C"
 #
 # Note: Using the command line option --plugin and -P requires additional
@@ -75,7 +75,7 @@ CONFIGDIR="/video"
 #   runvdr --plugin "hello -b -a \"A B C\""
 #
 # Add as many plugins as you want here:
-AddPlugin 
+AddPlugin
 AddPlugin
 AddPlugin
 AddPlugin
@@ -94,14 +94,14 @@ LIBDIR=""
 #####   More config options
 ##### -----------------------
 
-# Run as user VDRUSER in case vdr was started as user 'root'. Starting vdr as 
-# 'root' is necessary if the system time shall be set from the transponder 
+# Run as user VDRUSER in case vdr was started as user 'root'. Starting vdr as
+# 'root' is necessary if the system time shall be set from the transponder
 # data, but for security reasons vdr can switch to a lesser privileged user
 # id during normal operation.
 USER=""
 
-# Write the EPG data into EPGFILE. Default is /video/epg.data. 
-# Use EPGFILE=- to disable this. If EPGFILE is a directory, the file 
+# Write the EPG data into EPGFILE. Default is /video/epg.data.
+# Use EPGFILE=- to disable this. If EPGFILE is a directory, the file
 # epg.data will be created in that directory.
 EPGFILE=""
 
@@ -141,9 +141,9 @@ WATCHDOG=90
 # Set to anything to activate:
 DAEMON=
 
-# Write images from the SVDRP command GRAB into the given directory. 
-# GRAB must be the full path name of an existing directory, without 
-# any "..", double '/' or symlinks. By default, or if GRAB=- is given, 
+# Write images from the SVDRP command GRAB into the given directory.
+# GRAB must be the full path name of an existing directory, without
+# any "..", double '/' or symlinks. By default, or if GRAB=- is given,
 # grabbing images to disk is disabled.
 GRAB=
 
@@ -158,7 +158,7 @@ NOKBD=
 # If not set, or set to 0, don't use rcu.
 RCU=
 
-# encode special characters in recording names to avoid problems 
+# encode special characters in recording names to avoid problems
 # with VFAT file systems
 VFAT=
 
@@ -186,7 +186,7 @@ RUNVDRPID=/var/run/runvdr.pid
 # Set the controlling terminal. For example, /dev/tty8
 TERMINAL="/dev/tty8"
 
-# Switch console to some terminal? Needs terminal number. 
+# Switch console to some terminal? Needs terminal number.
 # For example, SWITCHTERMINAL=8
 SWITCHTERMINAL=8
 
@@ -197,8 +197,8 @@ SWITCHTERMINAL=8
 # Set character set that VDR shoud use
 # VDR_CHARSET_OVERRIDE="ISO-8859-15"
 
-# If VDR restarts automatically, only do this number of restarts before giving up
-# Setting this to 0 will cancel any restart attempt of VDR
+# If VDR restarts automatically, only do this number of restarts before giving
+# up. Setting this to 0 will cancel any restart attempt of VDR
 MAXRESTARTS=5
 
 # Only count restart attempts where VDR did not run longer than # seconds
@@ -211,7 +211,7 @@ DVBUNLOADONEXIT=
 
 # Additional parameters to pass to VDR directly, without parsing:
 # Add them without extra quoting, like AddParams -a -b -c "Some Parameter"
-AddParams 
+AddParams
 
 # Command wrapper. Will be placed in front of the VDR command.
 # Example:

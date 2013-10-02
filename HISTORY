@@ -4,7 +4,8 @@ runvdr extreme Revision History
 2009-06-28: Version 0.4.2
 - New: Support -i and --instance of VDR-1.7.4+
 - New: Command line option to set VDR_CHARSET_OVERRIDE of VDR 1.5.18+
-- New: Function-style callbacks for DVB load/unload commands (backwards compatible)
+- New: Function-style callbacks for DVB load/unload commands (backwards
+  compatible)
 - New: Option to always unload DVB drivers on exit
 - New: Callbacks for X-Server startup and shutdown to run additional programs
 - Fix: --lirc not working. Thx to caps!
@@ -17,7 +18,8 @@ runvdr extreme Revision History
 
 2008-09-14: Version 0.4.0
 - New: Start own X server for VDR to run in
-- New: Experimental support to read sysconfig file from setup-plugin, thx to dad401
+- New: Experimental support to read sysconfig file from setup-plugin,
+  thx to dad401
 - New: Parameters to control automatic restart behavior
 - Fix: Made the init.d script LSB compliant, thx to Antonio for the hint.
 - Fix: Online help for runvdr-conf.d
@@ -25,7 +27,7 @@ runvdr extreme Revision History
 2008-03-02: Version 0.3.0
 - New: Support for the new VDR parameters --localedir and --userdump
   (LOCALEDIR="..." and USERDUMP="1")
-- New: Wildcard loading with INCLUDE, allows for example to INCLUDE 
+- New: Wildcard loading with INCLUDE, allows for example to INCLUDE
   /etc/runvdr/conf.d/* to load several one-file-per-plugin config files.
 - New: runvdr-conf.d, a plugin enable/disable service
 - New: osdserver frontend for runvdr-conf.d
@@ -35,10 +37,10 @@ runvdr extreme Revision History
 
 2007-02-18: Version 0.2.0
 
-- New: Pass DVBLOAD and DVBUNLOAD to eval, allows to execute more than one 
+- New: Pass DVBLOAD and DVBUNLOAD to eval, allows to execute more than one
   command, thanks to Thomas Büschgens
 - New: Load ~/.runvdr.conf as default, load /etc/runvdr.conf as fallback
-- New: INCLUDE directive to load other config file  
+- New: INCLUDE directive to load other config file
 - New: -P "-plugin" drops plugin from plugin load list. Same for -D.
 - Change: LANGUAGE now sets LC_ALL, not LANG.
 
@@ -51,4 +53,3 @@ runvdr extreme Revision History
 2006-10-08: Version 0.1
 
 - Initial revision.
-
