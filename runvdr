@@ -39,7 +39,6 @@ KILL="kill"
 SLEEP="sleep"
 CHVT="chvt"
 DATE="date"
-SETTERM="setterm"
 
 # Options summary and conf file entries of runvdr:
 #
@@ -106,7 +105,6 @@ which $KILL      >/dev/null || { echo missing $KILL... >&2 ;    exit 1 ; }
 which $SLEEP     >/dev/null || { echo missing $SLEEP... >&2 ;   exit 1 ; }
 which $CHVT      >/dev/null || { echo missing $CHVT... >&2 ;    exit 1 ; }
 which $DATE      >/dev/null || { echo missing $DATE... >&2 ;    exit 1 ; }
-which $SETTERM   >/dev/null || { echo missing $SETTERM... >&2 ; exit 1 ; }
 
 
 
@@ -900,9 +898,6 @@ while (true) do
     else
         SHORTRUNTIMES=0
     fi
-
-    # Reset terminal status
-    [ -n "$TERMINAL" ] && $SETTERM -initialize
 
     case "$SIG" in
       HUP | INT | QUIT | TERM)
