@@ -54,6 +54,12 @@ CONFIGDIR="/video"
 #
 # LOCALEDIR="/usr/src/vdr/locale"
 
+# Location where VDR and plugins save cache files
+CACHEDIR=
+
+# Location from where plugins read resource files
+RESDIR=
+
 ##### -----------
 #####   Plugins
 ##### -----------

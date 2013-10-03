@@ -73,10 +73,11 @@ DATE="date"
 # Supported options of VDR
 #
 #  -a #  --audio #     AUDIO            send Dolby Digital audio to stdin of command #
+#        --cachedir=#  CACHEDIR         save cache files in DIR
 #  -c #  --config #    CONFIGDIR        read config files from DIR
 #  -d    --daemon      DAEMON           run in daemon mode
 #  -D #  --device #    DVBDEVICE        use only the given DVB device (NUM = 0, 1, 2...)
-#        --dirnames #  DIRNAMES         Changes recording directory name format
+#        --dirnames=#  DIRNAMES         Changes recording directory name format
 #  -E #  --epgfile #   EPGFILE          write the EPG data into the given FILE. - to disable.
 #  -g #  --grab #      GRAB             write images from the SVDRP command GRAB into the given DIR;
 #  -L #  --lib #       LIBDIR           search for plugins in DIR (default is %s)
@@ -90,6 +91,7 @@ DATE="date"
 #  -p #  --port #      SVDRPPORT        use PORT for SVDRP
 #        --rcu #?      RCU              use a remote control device, attached to PATH
 #  -r #  --record #    RECORDCMD        call CMD before and after a recording
+#        --resdir=#    RESDIR           read resource files from DIR
 #  -s #  --shutdown #  SHUTDOWN         call CMD to shutdown the computer
 #  -t #  --terminal #  TERMINAL         controlling tty
 #  -u #  --user #      USER             run as user USER; only applicable if started as root
@@ -120,8 +122,8 @@ function ParseCommandLine_Step1() {
         runvdr-pid:,dvb-load:,dvb-unload:,dvb-unload-on-exit,x-startup:,\
         x-shutdown:,language:,charset-override:,wrapper:,\
         term-timeout:,kill-timeout:,terminate::,restart::,dvb-restart::,\
-        wait::,audio:,config:,daemon,device:,dirnames:,epgfile:,grab:,help,lib:,lirc::,\
-        instance:,log:,localedir:,mute,no-kbd,plugin:,port:,rcu::,record:,shutdown:,\
+        wait::,audio:,cachedir:,config:,daemon,device:,dirnames:,epgfile:,grab:,help,lib:,lirc::,\
+        instance:,log:,localedir:,mute,no-kbd,plugin:,port:,rcu::,record:,resdir:,shutdown:,\
         terminal:,user:,userdump,version,vfat,video:,watchdog:"
 
     # prepare all optios for later processing
@@ -159,6 +161,7 @@ function ParseCommandLine_Step1() {
         -V|--version)                        shift  ;;
 
         -a|--audio)                          shift 2;;
+           --cachedir)                       shift 2;;
         -c|--config)                         shift 2;;
         -d|--daemon)                         shift  ;;
         -D|--device)                         shift 2;;
@@ -176,6 +179,7 @@ function ParseCommandLine_Step1() {
         -P|--plugin)                         shift 2;;
            --rcu)                            shift 2;;
         -r|--record)                         shift 2;;
+           --resdir)                         shift 2;;
         -s|--shutdown)                       shift 2;;
         -t|--terminal)                       shift 2;;
         -u|--user)                           shift 2;;
@@ -225,6 +229,7 @@ function Clean() {
     VERSION=
 
     AUDIO=
+    CACHEDIR=
     CONFIGDIR=
     DAEMON=
     DVBDEVICE=()
@@ -241,6 +246,7 @@ function Clean() {
     PLUGINS=()
     SVDRPPORT=
     RECORDCMD=
+    RESDIR=
     RCU=
     SHUTDOWN=
     TERMINAL=
@@ -409,6 +415,7 @@ function ParseCommandLine_Step2() {
 
 
         -a|--audio)        AUDIO="$2";     shift 2;;
+           --cachedir)     CACHEDIR="$2";  shift 2;;
         -c|--config)       CONFIGDIR="$2"; shift 2;;
         -d|--daemon)       DAEMON=1;       shift  ;;
         -D|--device)       AddDevice "$2"; shift 2;;
@@ -426,6 +433,7 @@ function ParseCommandLine_Step2() {
         -P|--plugin)       AddPluginString "$2"; shift 2;;
            --rcu)          RCU="$2";       shift 2;;
         -r|--record)       RECORDCMD="$2"; shift 2;;
+           --resdir)       RESDIR="$2";    shift 2;;
         -s|--shutdown)     SHUTDOWN="$2";  shift 2;;
         -t|--terminal)     TERMINAL="$2";  shift 2;;
         -u|--user)         USER="$2";      shift 2;;
@@ -488,6 +496,7 @@ runvdr Options:
 
 Parsed VDR options:
 -a # --audio=#     send Dolby Digital audio to stdin of command CMD
+     --cachedir=#  save cache files in DIR
 -c # --config=#    read config files from DIR
 -d   --daemon      run in daemon mode
 -D # --device=#    use only the given DVB device (NUM = 0, 1, 2...)
@@ -515,6 +524,7 @@ Parsed VDR options:
 -p # --port=#      use PORT for SVDRP
      --rcu[=#]     use a remote control device, attached to PATH
 -r # --record=#    call CMD before and after a recording
+     --resdir=#    read resource files from DIR
 -s # --shutdown=#  call CMD to shutdown the computer
 -t # --terminal=#  controlling tty
 -u # --user=#      run as user USER; only applicable if started as root
@@ -557,6 +567,7 @@ function BuildCommand() {
     [ "${#ADDPARAMS[*]}" -gt 0 ] && AddCommandLine "${ADDPARAMS[@]}"
 
     [ -n "$AUDIO"     ] && AddCommandLine -a "$AUDIO"
+    [ -n "$CACHEDIR"  ] && AddCommandLine --cachedir="$CACHEDIR"
     [ -n "$CONFIGDIR" ] && AddCommandLine -c "$CONFIGDIR"
     [ -n "$DAEMON"    ] && AddCommandLine -d
 
@@ -603,6 +614,7 @@ function BuildCommand() {
         *) AddCommandLine --rcu="$RCU";;
     esac
 
+    [ -n "$RESDIR"    ] && AddCommandLine --resdir="$RESDIR"
     [ -n "$SHUTDOWN"  ] && AddCommandLine -s "$SHUTDOWN"
     [ -n "$TERMINAL"  ] && AddCommandLine -t "$TERMINAL"
     [ -n "$USER"      ] && AddCommandLine -u "$USER"
