@@ -76,6 +76,7 @@ DATE="date"
 #  -c #  --config #    CONFIGDIR        read config files from DIR
 #  -d    --daemon      DAEMON           run in daemon mode
 #  -D #  --device #    DVBDEVICE        use only the given DVB device (NUM = 0, 1, 2...)
+#        --dirnames #  DIRNAMES         Changes recording directory name format
 #  -E #  --epgfile #   EPGFILE          write the EPG data into the given FILE. - to disable.
 #  -g #  --grab #      GRAB             write images from the SVDRP command GRAB into the given DIR;
 #  -L #  --lib #       LIBDIR           search for plugins in DIR (default is %s)
@@ -119,7 +120,7 @@ function ParseCommandLine_Step1() {
         runvdr-pid:,dvb-load:,dvb-unload:,dvb-unload-on-exit,x-startup:,\
         x-shutdown:,language:,charset-override:,wrapper:,\
         term-timeout:,kill-timeout:,terminate::,restart::,dvb-restart::,\
-        wait::,audio:,config:,daemon,device:,epgfile:,grab:,help,lib:,lirc::,\
+        wait::,audio:,config:,daemon,device:,dirnames:,epgfile:,grab:,help,lib:,lirc::,\
         instance:,log:,localedir:,mute,no-kbd,plugin:,port:,rcu::,record:,shutdown:,\
         terminal:,user:,userdump,version,vfat,video:,watchdog:"
 
@@ -161,6 +162,7 @@ function ParseCommandLine_Step1() {
         -c|--config)                         shift 2;;
         -d|--daemon)                         shift  ;;
         -D|--device)                         shift 2;;
+           --dirnames)                       shift 2;;
         -E|--epgfile)                        shift 2;;
         -g|--grab)                           shift  ;;
         -i|--instance)                       shift 2;;
@@ -226,6 +228,7 @@ function Clean() {
     CONFIGDIR=
     DAEMON=
     DVBDEVICE=()
+    DIRNAMES=
     EPGFILE=
     GRAB=
     INSTANCE=
@@ -409,6 +412,7 @@ function ParseCommandLine_Step2() {
         -c|--config)       CONFIGDIR="$2"; shift 2;;
         -d|--daemon)       DAEMON=1;       shift  ;;
         -D|--device)       AddDevice "$2"; shift 2;;
+           --dirnames)     DIRNAMES="$2";  shift 2;;
         -E|--epgfile)      EPGFILE="$2";   shift 2;;
         -g|--grab)         GRAB="1";       shift  ;;
         -i|--instance)     INSTANCE="$2";  shift 2;;
@@ -489,6 +493,13 @@ Parsed VDR options:
 -D # --device=#    use only the given DVB device (NUM = 0, 1, 2...)
                    Use '-' to override devices from config file
                    Use '-x' to ignore device x from config file
+     --dirnames=PATH[,NAME[,ENC]]
+                   set the maximum directory path length to PATH; if NAME is
+                   also given, it defines the maximum directory name length;
+                   the optional ENC can be 0 or 1, and controls whether
+                   special characters in directory names are encoded as
+                   hex values (default: 0); if PATH or NAME are left empty
+                   (as in ",,1" to only set ENC), the defaults apply
 -E # --epgfile=#   write the EPG data into the given FILE. - to disable.
 -g # --grab=#      write images from the SVDRP command GRAB into the given DIR
 -i # --instance=#  use ID as the id of this VDR instance
@@ -508,7 +519,7 @@ Parsed VDR options:
 -t # --terminal=#  controlling tty
 -u # --user=#      run as user USER; only applicable if started as root
      --userdump    allow coredumps if -u is given (debugging)
-     --vfat        encode special characters in recording names
+     --vfat        for backwards compatibility (same as --dirnames=250,40,1)
 -v # --video=#     use DIR as video directory
 -w # --watchdog=#  activate the watchdog timer with a timeout of SEC
 
@@ -553,6 +564,7 @@ function BuildCommand() {
         [ -n "$i" ] && AddCommandLine -D "$i"
     done
 
+    [ -n "$DIRNAMES"  ] && AddCommandLine --dirnames="$DIRNAMES"
     [ -n "$EPGFILE"   ] && AddCommandLine -E "$EPGFILE"
     [ -n "$GRAB"      ] && AddCommandLine -g "$GRAB"
     [ -n "$INSTANCE"  ] && AddCommandLine -i "$INSTANCE"
