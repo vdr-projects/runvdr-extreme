@@ -135,7 +135,7 @@ LOGLEVEL=3
 MUTE=
 
 # Use SVDRPPORT port for SVDRP. A value of 0 turns off SVDRP. The default
-# SVDRP port is 2001. You need to edit the file svdrphosts.conf
+# SVDRP port is 6419. You need to edit the file svdrphosts.conf
 # in order to enable access to the SVDRP port.
 SVDRPPORT=
 
@@ -153,7 +153,7 @@ DAEMON=
 # grabbing images to disk is disabled.
 GRAB=
 
-# Use a LIRC remote control device. If set to 1, vdr uses /dev/lircd.
+# Use a LIRC remote control device. If set to 1, vdr uses /var/run/lirc/lircd.
 # If not set, or set to 0, don't use LIRC.
 LIRC=
 
@@ -209,7 +209,7 @@ SWITCHTERMINAL=8
 # This affects sort options in recordings.
 # LANGUAGE="de_DE@euro"
 
-# Set character set that VDR shoud use
+# Set character set that VDR should use
 # VDR_CHARSET_OVERRIDE="ISO-8859-15"
 
 # If VDR restarts automatically, only do this number of restarts before giving
