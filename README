@@ -149,12 +149,10 @@ Unix commands, that runvdr uses:
 Command       Debian packet
  pgrep         procps
  ps            procps
- kill          procps
  sleep         coreutils
  date          coreutils
  chvt          console-tools
  getopt        util-linux
- setterm       util-linux
 
 
 

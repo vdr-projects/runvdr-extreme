@@ -35,7 +35,6 @@ RUNVDRCONF=""
 PGREP="pgrep"
 PS="ps"
 GETOPT="getopt"
-KILL="kill"
 SLEEP="sleep"
 CHVT="chvt"
 DATE="date"
@@ -104,7 +103,6 @@ DATE="date"
 which $PGREP     >/dev/null || { echo missing $PGREP... >&2 ;   exit 1 ; }
 which $PS        >/dev/null || { echo missing $PS... >&2 ;      exit 1 ; }
 which $GETOPT    >/dev/null || { echo missing $GETOPT... >&2 ;  exit 1 ; }
-which $KILL      >/dev/null || { echo missing $KILL... >&2 ;    exit 1 ; }
 which $SLEEP     >/dev/null || { echo missing $SLEEP... >&2 ;   exit 1 ; }
 which $CHVT      >/dev/null || { echo missing $CHVT... >&2 ;    exit 1 ; }
 which $DATE      >/dev/null || { echo missing $DATE... >&2 ;    exit 1 ; }
@@ -654,7 +652,7 @@ function WaitKill() {
     GetChilds "$1" "$2"
 
     echo -n "Sending ${#childlist[*]} processes the TERM signal."
-    $KILL -TERM ${childlist[*]} 2>/dev/null
+    kill -TERM ${childlist[*]} 2>/dev/null
 
     for ((i=0;i<$3;i++)) ; do
         $PS ${childlist[*]} >/dev/null || { echo terminated. ; return ; }
@@ -665,7 +663,7 @@ function WaitKill() {
     echo
 
     echo -n "Sending ${#childlist[*]} processes the KILL signal."
-    $KILL -KILL ${childlist[*]} 2>/dev/null
+    kill -KILL ${childlist[*]} 2>/dev/null
 
     for ((i=0;i<$4;i++)) ; do
         $PS ${childlist[*]} >/dev/null || { echo terminated. ; return ; }
@@ -769,7 +767,7 @@ fi
 if [ "$TERMINATE" != "0" ] ; then
     if [ -n "$TERMINATE" ] ; then
         echo -n "Terminating runvdr (PID=$TERMINATE)"
-        $KILL -TERM $TERMINATE
+        kill -TERM $TERMINATE
         while [ -z "$WAIT" ] || [ "$WAIT" -gt 0 ] ; do
             $PS $TERMINATE >/dev/null || { echo done ; break ; }
             echo -n "."
@@ -787,7 +785,7 @@ fi
 if [ "$RESTART" != "0" ] ; then
     if [ -n "$RESTART" ] ; then
        echo -n "Restarting runvdr (PID=$RESTART)..."
-       $KILL -USR1 $RESTART
+       kill -USR1 $RESTART
        echo ""
     else
         echo "No runvdr process to restart."
@@ -798,7 +796,7 @@ fi
 if [ "$DVBRESTART" != "0" ] ; then
     if [ -n "$DVBRESTART" ] ; then
         echo -n "DVB-restarting runvdr (PID=$DVBRESTART)..."
-        $KILL -USR2 $DVBRESTART
+        kill -USR2 $DVBRESTART
         echo ""
     else
         echo "No runvdr process to dvb-restart."
