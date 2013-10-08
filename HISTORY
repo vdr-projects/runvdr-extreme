@@ -8,6 +8,7 @@ runvdr extreme Revision History
   runvdr.conf.pod for instructions on how to create man-page from it.
 - Fix: VDR_CHARSET_OVERRIDE now is correctly exported to the VDR process
 - Fix: Fixed problem with closed STDOUT with newer versions of "ps"
+- Fix: runvdr-conf.d fixed for OSDServer 0.1.3. Thanks to iNOB.
 
 2009-06-28: Version 0.4.2
 - New: Support -i and --instance of VDR-1.7.4+

@@ -306,8 +306,8 @@ function Osdserver_edit() {
             enable="${reply6xx[1]}"
 
             SendCmd "prio.GetValue" || return $false
-            [ "${reply6xx[0]}" != 600 ] && return $false
-            prio="${reply6xx[1]}"
+            [ "${reply5xx[0]}" != 500 ] && return $false
+            prio="${reply5xx[1]}"
 
             if [ "$enable" == "Yes" ] ; then
                 Command_Enable "$short" --prio "$prio"
