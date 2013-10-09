@@ -2,7 +2,8 @@
 #
 #  runvdr extreme - configurable vdr launcher script
 #
-#  Copyright (C) 2006-2009 by Udo Richter
+#  Copyright (C) 2006-2009 Udo Richter
+#                2013      Manuel Reimer
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,9 +20,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 # Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 #
-# The author can be reached at <udo_richter(a)gmx.de>
+# The authors can be reached at <udo_richter(a)gmx.de>
+#                               <manuel.reimer@gmx.de>
 #
-# The project's page is at http://www.udo-richter.de/vdr/scripts.html#runvdr
+# The project's page is at
+# http://projects.vdr-developer.org/projects/runvdr-extreme
 
 
 RUNVDR="${0##*/}"
@@ -33,11 +36,9 @@ RUNVDRCONF=""
 PGREP="pgrep"
 PS="ps"
 GETOPT="getopt"
-KILL="kill"
 SLEEP="sleep"
 CHVT="chvt"
 DATE="date"
-SETTERM="setterm"
 
 # Options summary and conf file entries of runvdr:
 #
@@ -72,9 +73,11 @@ SETTERM="setterm"
 # Supported options of VDR
 #
 #  -a #  --audio #     AUDIO            send Dolby Digital audio to stdin of command #
+#        --cachedir=#  CACHEDIR         save cache files in DIR
 #  -c #  --config #    CONFIGDIR        read config files from DIR
 #  -d    --daemon      DAEMON           run in daemon mode
 #  -D #  --device #    DVBDEVICE        use only the given DVB device (NUM = 0, 1, 2...)
+#        --dirnames=#  DIRNAMES         Changes recording directory name format
 #  -E #  --epgfile #   EPGFILE          write the EPG data into the given FILE. - to disable.
 #  -g #  --grab #      GRAB             write images from the SVDRP command GRAB into the given DIR;
 #  -L #  --lib #       LIBDIR           search for plugins in DIR (default is %s)
@@ -88,6 +91,7 @@ SETTERM="setterm"
 #  -p #  --port #      SVDRPPORT        use PORT for SVDRP
 #        --rcu #?      RCU              use a remote control device, attached to PATH
 #  -r #  --record #    RECORDCMD        call CMD before and after a recording
+#        --resdir=#    RESDIR           read resource files from DIR
 #  -s #  --shutdown #  SHUTDOWN         call CMD to shutdown the computer
 #  -t #  --terminal #  TERMINAL         controlling tty
 #  -u #  --user #      USER             run as user USER; only applicable if started as root
@@ -100,11 +104,9 @@ SETTERM="setterm"
 which $PGREP     >/dev/null || { echo missing $PGREP... >&2 ;   exit 1 ; }
 which $PS        >/dev/null || { echo missing $PS... >&2 ;      exit 1 ; }
 which $GETOPT    >/dev/null || { echo missing $GETOPT... >&2 ;  exit 1 ; }
-which $KILL      >/dev/null || { echo missing $KILL... >&2 ;    exit 1 ; }
 which $SLEEP     >/dev/null || { echo missing $SLEEP... >&2 ;   exit 1 ; }
 which $CHVT      >/dev/null || { echo missing $CHVT... >&2 ;    exit 1 ; }
 which $DATE      >/dev/null || { echo missing $DATE... >&2 ;    exit 1 ; }
-which $SETTERM   >/dev/null || { echo missing $SETTERM... >&2 ; exit 1 ; }
 
 
 
@@ -119,8 +121,8 @@ function ParseCommandLine_Step1() {
         runvdr-pid:,dvb-load:,dvb-unload:,dvb-unload-on-exit,x-startup:,\
         x-shutdown:,language:,charset-override:,wrapper:,\
         term-timeout:,kill-timeout:,terminate::,restart::,dvb-restart::,\
-        wait::,audio:,config:,daemon,device:,epgfile:,grab:,help,lib:,lirc::,\
-        instance:,log:,localedir:,mute,no-kbd,plugin:,port:,rcu::,record:,shutdown:,\
+        wait::,audio:,cachedir:,config:,daemon,device:,dirnames:,epgfile:,grab:,help,lib:,lirc::,\
+        instance:,log:,localedir:,mute,no-kbd,plugin:,port:,rcu::,record:,resdir:,shutdown:,\
         terminal:,user:,userdump,version,vfat,video:,watchdog:"
 
     # prepare all optios for later processing
@@ -158,9 +160,11 @@ function ParseCommandLine_Step1() {
         -V|--version)                        shift  ;;
 
         -a|--audio)                          shift 2;;
+           --cachedir)                       shift 2;;
         -c|--config)                         shift 2;;
         -d|--daemon)                         shift  ;;
         -D|--device)                         shift 2;;
+           --dirnames)                       shift 2;;
         -E|--epgfile)                        shift 2;;
         -g|--grab)                           shift  ;;
         -i|--instance)                       shift 2;;
@@ -174,6 +178,7 @@ function ParseCommandLine_Step1() {
         -P|--plugin)                         shift 2;;
            --rcu)                            shift 2;;
         -r|--record)                         shift 2;;
+           --resdir)                         shift 2;;
         -s|--shutdown)                       shift 2;;
         -t|--terminal)                       shift 2;;
         -u|--user)                           shift 2;;
@@ -199,7 +204,7 @@ function Clean() {
     ADDPARAMS=()
     PLUGINSETUPCONF=
     SETUPPLUGINCONF=
-    VDRPRG=
+    VDRPRG=vdr
     SWITCHTERMINAL=
     XSERVER=
     RUNVDRPID=
@@ -209,7 +214,7 @@ function Clean() {
     XSTARTUP=
     XSHUTDOWN=
     LANGUAGE=
-    VDR_CHARSET_OVERRIDE=
+    export VDR_CHARSET_OVERRIDE=
     WRAPPER=
     TERMTIMEOUT=
     KILLTIMEOUT=
@@ -223,9 +228,11 @@ function Clean() {
     VERSION=
 
     AUDIO=
+    CACHEDIR=
     CONFIGDIR=
     DAEMON=
     DVBDEVICE=()
+    DIRNAMES=
     EPGFILE=
     GRAB=
     INSTANCE=
@@ -238,6 +245,7 @@ function Clean() {
     PLUGINS=()
     SVDRPPORT=
     RECORDCMD=
+    RESDIR=
     RCU=
     SHUTDOWN=
     TERMINAL=
@@ -313,7 +321,7 @@ function AddParams() {
     for i ; do
     	ADDPARAMS[${#ADDPARAMS[*]}]="$i"
     done
-}        
+}
 
 function INCLUDE() {
     # include different conf file(s)
@@ -368,7 +376,7 @@ function LoadConfFile() {
     [ -z "$DVBRESTART" ] && DVBRESTART=0
     [ -z "$MAXRESTARTS" ] && MAXRESTARTS=5
     [ -z "$RESTARTTIME" ] && RESTARTTIME=10
-    
+
     # Compatibility: Map old ADDPARAM to new AddParams
     [ -n "$ADDPARAM" ] && eval "AddParams $ADDPARAM"
 
@@ -413,9 +421,11 @@ function ParseCommandLine_Step2() {
 
 
         -a|--audio)        AUDIO="$2";     shift 2;;
+           --cachedir)     CACHEDIR="$2";  shift 2;;
         -c|--config)       CONFIGDIR="$2"; shift 2;;
         -d|--daemon)       DAEMON=1;       shift  ;;
         -D|--device)       AddDevice "$2"; shift 2;;
+           --dirnames)     DIRNAMES="$2";  shift 2;;
         -E|--epgfile)      EPGFILE="$2";   shift 2;;
         -g|--grab)         GRAB="1";       shift  ;;
         -i|--instance)     INSTANCE="$2";  shift 2;;
@@ -429,6 +439,7 @@ function ParseCommandLine_Step2() {
         -P|--plugin)       AddPluginString "$2"; shift 2;;
            --rcu)          RCU="$2";       shift 2;;
         -r|--record)       RECORDCMD="$2"; shift 2;;
+           --resdir)       RESDIR="$2";    shift 2;;
         -s|--shutdown)     SHUTDOWN="$2";  shift 2;;
         -t|--terminal)     TERMINAL="$2";  shift 2;;
         -u|--user)         USER="$2";      shift 2;;
@@ -491,11 +502,19 @@ runvdr Options:
 
 Parsed VDR options:
 -a # --audio=#     send Dolby Digital audio to stdin of command CMD
+     --cachedir=#  save cache files in DIR
 -c # --config=#    read config files from DIR
 -d   --daemon      run in daemon mode
 -D # --device=#    use only the given DVB device (NUM = 0, 1, 2...)
                    Use '-' to override devices from config file
                    Use '-x' to ignore device x from config file
+     --dirnames=PATH[,NAME[,ENC]]
+                   set the maximum directory path length to PATH; if NAME is
+                   also given, it defines the maximum directory name length;
+                   the optional ENC can be 0 or 1, and controls whether
+                   special characters in directory names are encoded as
+                   hex values (default: 0); if PATH or NAME are left empty
+                   (as in ",,1" to only set ENC), the defaults apply
 -E # --epgfile=#   write the EPG data into the given FILE. - to disable.
 -g # --grab=#      write images from the SVDRP command GRAB into the given DIR
 -i # --instance=#  use ID as the id of this VDR instance
@@ -511,11 +530,12 @@ Parsed VDR options:
 -p # --port=#      use PORT for SVDRP
      --rcu[=#]     use a remote control device, attached to PATH
 -r # --record=#    call CMD before and after a recording
+     --resdir=#    read resource files from DIR
 -s # --shutdown=#  call CMD to shutdown the computer
 -t # --terminal=#  controlling tty
 -u # --user=#      run as user USER; only applicable if started as root
      --userdump    allow coredumps if -u is given (debugging)
-     --vfat        encode special characters in recording names
+     --vfat        for backwards compatibility (same as --dirnames=250,40,1)
 -v # --video=#     use DIR as video directory
 -w # --watchdog=#  activate the watchdog timer with a timeout of SEC
 
@@ -553,6 +573,7 @@ function BuildCommand() {
     [ "${#ADDPARAMS[*]}" -gt 0 ] && AddCommandLine "${ADDPARAMS[@]}"
 
     [ -n "$AUDIO"     ] && AddCommandLine -a "$AUDIO"
+    [ -n "$CACHEDIR"  ] && AddCommandLine --cachedir="$CACHEDIR"
     [ -n "$CONFIGDIR" ] && AddCommandLine -c "$CONFIGDIR"
     [ -n "$DAEMON"    ] && AddCommandLine -d
 
@@ -560,6 +581,7 @@ function BuildCommand() {
         [ -n "$i" ] && AddCommandLine -D "$i"
     done
 
+    [ -n "$DIRNAMES"  ] && AddCommandLine --dirnames="$DIRNAMES"
     [ -n "$EPGFILE"   ] && AddCommandLine -E "$EPGFILE"
     [ -n "$GRAB"      ] && AddCommandLine -g "$GRAB"
     [ -n "$INSTANCE"  ] && AddCommandLine -i "$INSTANCE"
@@ -598,6 +620,7 @@ function BuildCommand() {
         *) AddCommandLine --rcu="$RCU";;
     esac
 
+    [ -n "$RESDIR"    ] && AddCommandLine --resdir="$RESDIR"
     [ -n "$SHUTDOWN"  ] && AddCommandLine -s "$SHUTDOWN"
     [ -n "$TERMINAL"  ] && AddCommandLine -t "$TERMINAL"
     [ -n "$USER"      ] && AddCommandLine -u "$USER"
@@ -637,10 +660,10 @@ function WaitKill() {
     GetChilds "$1" "$2"
 
     echo -n "Sending ${#childlist[*]} processes the TERM signal."
-    $KILL -TERM ${childlist[*]} >&- 2>&-
+    kill -TERM ${childlist[*]} 2>/dev/null
 
     for ((i=0;i<$3;i++)) ; do
-        $PS ${childlist[*]} >&- 2>&- || { echo terminated. ; return ; }
+        $PS ${childlist[*]} >/dev/null || { echo terminated. ; return ; }
 
         echo -n .
         $SLEEP 1
@@ -648,10 +671,10 @@ function WaitKill() {
     echo
 
     echo -n "Sending ${#childlist[*]} processes the KILL signal."
-    $KILL -KILL ${childlist[*]} >&- 2>&-
+    kill -KILL ${childlist[*]} 2>/dev/null
 
     for ((i=0;i<$4;i++)) ; do
-        $PS ${childlist[*]} >&- 2>&- || { echo terminated. ; return ; }
+        $PS ${childlist[*]} >/dev/null || { echo terminated. ; return ; }
         echo -n .
         $SLEEP 1
     done
@@ -752,9 +775,9 @@ fi
 if [ "$TERMINATE" != "0" ] ; then
     if [ -n "$TERMINATE" ] ; then
         echo -n "Terminating runvdr (PID=$TERMINATE)"
-        $KILL -TERM $TERMINATE
+        kill -TERM $TERMINATE
         while [ -z "$WAIT" ] || [ "$WAIT" -gt 0 ] ; do
-            $PS $TERMINATE >&- || { echo done ; break ; }
+            $PS $TERMINATE >/dev/null || { echo done ; break ; }
             echo -n "."
             $SLEEP 1
             [ -n "$WAIT" ] && let WAIT=WAIT-1
@@ -770,7 +793,7 @@ fi
 if [ "$RESTART" != "0" ] ; then
     if [ -n "$RESTART" ] ; then
        echo -n "Restarting runvdr (PID=$RESTART)..."
-       $KILL -USR1 $RESTART
+       kill -USR1 $RESTART
        echo ""
     else
         echo "No runvdr process to restart."
@@ -781,7 +804,7 @@ fi
 if [ "$DVBRESTART" != "0" ] ; then
     if [ -n "$DVBRESTART" ] ; then
         echo -n "DVB-restarting runvdr (PID=$DVBRESTART)..."
-        $KILL -USR2 $DVBRESTART
+        kill -USR2 $DVBRESTART
         echo ""
     else
         echo "No runvdr process to dvb-restart."
@@ -862,14 +885,14 @@ while (true) do
         # Run X server that runs VDR
         PROXYFILE="/tmp/runvdr-$$"
         [ -f "$PROXYFILE" ] && rm "$PROXYFILE"
-        
+
         # Pack command array into single env string:
         export VDRCOMMANDPROXY=`printf '%q ' "${VDRCOMMAND[@]}"`
         export XSTARTUP
         export XSHUTDOWN
         [ "`type -t XSTARTUP`" = "function" ] && export -f XSTARTUP
         [ "`type -t XSHUTDOWN`" = "function" ] && export -f XSHUTDOWN
-        
+
         # Fire up X server that calls back runvdr, and run into XSERVERPROXY there
         eval "xinit \""$0"\" --xserver-proxy=\""$PROXYFILE"\" -- $XSERVER &"
 
@@ -905,9 +928,6 @@ while (true) do
     else
         SHORTRUNTIMES=0
     fi
-
-    # Reset terminal status
-    [ -n "$TERMINAL" ] && $SETTERM -initialize
 
     case "$SIG" in
       HUP | INT | QUIT | TERM)
@@ -1011,9 +1031,7 @@ while (true) do
 done
 
 # Clean up PID file
-[ -n "$RUNVDRPID" ] && rm $RUNVDRPID >&- 2>&-
+[ -n "$RUNVDRPID" ] && rm $RUNVDRPID 2>/dev/null
 
 # Clean up proxy file, if used
-[ -n "$PROXYFILE" ] && rm $PROXYFILE >&- 2>&-
-
-
+[ -n "$PROXYFILE" ] && rm $PROXYFILE 2>/dev/null

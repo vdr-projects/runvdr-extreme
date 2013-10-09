@@ -1,9 +1,9 @@
-        
+
                        runvdr extreme
 
 
-Written by:               Udo Richter <udo_richter(a)gmx.de>
-Project's homepage:       http://www.udo-richter.de/vdr/scripts.en.html#runvdr
+Written by:            Udo Richter <udo_richter(a)gmx.de>
+Project's homepage:    http://projects.vdr-developer.org/projects/runvdr-extreme
 See the file COPYING for license information.
 
 
@@ -47,11 +47,11 @@ Additional features of runvdr-conf.d:
 Quick-start
 --------------------------------------------------------------------------
 - Copy runvdr to /usr/local/bin/ or whereever you like
-- Copy runvdr.conf.example to /etc/runvdr.conf if you want to run VDR as 
+- Copy runvdr.conf.example to /etc/runvdr.conf if you want to run VDR as
   server, or ~/.runvdr.conf if you want to run it as user.
 - Edit the runvdr.conf to match your needs
 
-The runvdr.conf is pretty much self-explaining. All runvdr.conf options are 
+The runvdr.conf is pretty much self-explaining. All runvdr.conf options are
 also available on command line, see --help.
 
 For the init-script (Debian):
@@ -85,20 +85,20 @@ load /etc/runvdr.conf from within ~/.runvdr.conf to just override some of
 the settings for the current user.
 
 The INCLUDE directive also supports multiple files per line. By that, you can
-use INCLUDE /etc/runvdr/conf.d/* to load a whole directory full of config 
-files at once. For example, you can put files (or symlinks) for each plugin 
+use INCLUDE /etc/runvdr/conf.d/* to load a whole directory full of config
+files at once. For example, you can put files (or symlinks) for each plugin
 to load into that directory, containing a single line "AddPlugin xxx".
 
 Plugins added by the AddPlugin directive in the conf file and the --plugin
-and -P command line option can be removed again from the list of plugins 
-by specifying "AddPlugin -name", --plugin="-name" or -P-name. 
-The name part acts as a pattern to the beginning of the plugin name, all 
+and -P command line option can be removed again from the list of plugins
+by specifying "AddPlugin -name", --plugin="-name" or -P-name.
+The name part acts as a pattern to the beginning of the plugin name, all
 plugins matching "name*" will be dropped. Especially "AddPlugin -" and -P- will
 drop all plugins from the list. The same mechanism works for the -D device
 parameter.
 
 To pass parameters to VDR without parsing by runvdr, use -- as paramenter.
-All parameters after -- will be directly passed to VDR. For erxample, 
+All parameters after -- will be directly passed to VDR. For erxample,
 "runvdr -- --help" will show the command line help of VDR instead of runvdr.
 
 
@@ -113,14 +113,14 @@ in alphabetical order.
 In case of runvdr-conf.d, one file similar to the skeleton.example file
 is placed in /etc/runvdr/ for each plugin that is available. Only plugins
 that have a symbolic link in /etc/runvdr/conf.d/ to their config file will
-be loaded. For this, the corresponding INCLUDE line must be enabled in 
+be loaded. For this, the corresponding INCLUDE line must be enabled in
 runvdr.conf.
 
 The following commands are available to manage the plugins:
 
 runvdr-conf.d show [name]
   Shows all plugins (resp. only the 'name' plugin), including the full name
-  and the load priority. 'name' is the file name in the /etc/runvdr/ 
+  and the load priority. 'name' is the file name in the /etc/runvdr/
   directory.
 
 runvdr-conf.d enable name [--prio XX]
@@ -134,10 +134,10 @@ runvdr-conf.d disable name
 
 runvdr-conf.d osdserver [--debug]
   Connects to the osdserver plugin and allows interactive plugin configuration
-  using the VDR OSD. From there, plugins can be activated and deactivated, 
+  using the VDR OSD. From there, plugins can be activated and deactivated,
   and the load priority can be changed.
-  Without --debug, runvdr-conf.d returns immediately, disconnection standard 
-  input/output, so it can be started from commands.conf. With --debug, the 
+  Without --debug, runvdr-conf.d returns immediately, disconnection standard
+  input/output, so it can be started from commands.conf. With --debug, the
   osdserver communication will be shown.
 
 
@@ -149,12 +149,10 @@ Unix commands, that runvdr uses:
 Command       Debian packet
  pgrep         procps
  ps            procps
- kill          procps
  sleep         coreutils
  date          coreutils
  chvt          console-tools
  getopt        util-linux
- setterm       util-linux
 
 
 
@@ -208,12 +206,11 @@ Load all plugins, but not the hello-plugin:
 Do a dry-run of runvdr:
 
   runvdr --wrapper=echo
-  
+
 Do a debugging session:
 
   runvdr --wrapper="gdb --args"
-  
+
 Start with a completely different setup:
 
   runvdr --runvdr-conf="/etc/runvdr-debugging.conf"
-

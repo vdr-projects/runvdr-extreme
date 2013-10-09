@@ -3,7 +3,7 @@
 #      Sample configuration file for the runvdr vdr-launcher script.
 #
 #      by Udo Richter <udo_richter(a)gmx.de>
-#      http://www.udo-richter.de/vdr/scripts.html#runvdr
+#      http://projects.vdr-developer.org/projects/runvdr-extreme
 #
 #
 
@@ -51,8 +51,14 @@ CONFIGDIR="/video"
 
 # Location of locale files for VDR 1.5.14 and newer. Default is to use
 # the builtin "./locale" or whatever was compiled as LOCDIR into VDR.
-# 
+#
 # LOCALEDIR="/usr/src/vdr/locale"
+
+# Location where VDR and plugins save cache files
+CACHEDIR=
+
+# Location from where plugins read resource files
+RESDIR=
 
 ##### -----------
 #####   Plugins
@@ -66,7 +72,7 @@ CONFIGDIR="/video"
 #
 #   AddPlugin hello -b -a "A B C"
 #
-# which would load a plugin named "hello", giving it the three 
+# which would load a plugin named "hello", giving it the three
 # command line options "-b", "-a" and "A B C"
 #
 # Note: Using the command line option --plugin and -P requires additional
@@ -75,7 +81,7 @@ CONFIGDIR="/video"
 #   runvdr --plugin "hello -b -a \"A B C\""
 #
 # Add as many plugins as you want here:
-AddPlugin 
+AddPlugin
 AddPlugin
 AddPlugin
 AddPlugin
@@ -94,14 +100,14 @@ LIBDIR=""
 #####   More config options
 ##### -----------------------
 
-# Run as user VDRUSER in case vdr was started as user 'root'. Starting vdr as 
-# 'root' is necessary if the system time shall be set from the transponder 
+# Run as user VDRUSER in case vdr was started as user 'root'. Starting vdr as
+# 'root' is necessary if the system time shall be set from the transponder
 # data, but for security reasons vdr can switch to a lesser privileged user
 # id during normal operation.
 USER=""
 
-# Write the EPG data into EPGFILE. Default is /video/epg.data. 
-# Use EPGFILE=- to disable this. If EPGFILE is a directory, the file 
+# Write the EPG data into EPGFILE. Default is /video/epg.data.
+# Use EPGFILE=- to disable this. If EPGFILE is a directory, the file
 # epg.data will be created in that directory.
 EPGFILE=""
 
@@ -129,7 +135,7 @@ LOGLEVEL=3
 MUTE=
 
 # Use SVDRPPORT port for SVDRP. A value of 0 turns off SVDRP. The default
-# SVDRP port is 2001. You need to edit the file svdrphosts.conf
+# SVDRP port is 6419. You need to edit the file svdrphosts.conf
 # in order to enable access to the SVDRP port.
 SVDRPPORT=
 
@@ -141,13 +147,13 @@ WATCHDOG=90
 # Set to anything to activate:
 DAEMON=
 
-# Write images from the SVDRP command GRAB into the given directory. 
-# GRAB must be the full path name of an existing directory, without 
-# any "..", double '/' or symlinks. By default, or if GRAB=- is given, 
+# Write images from the SVDRP command GRAB into the given directory.
+# GRAB must be the full path name of an existing directory, without
+# any "..", double '/' or symlinks. By default, or if GRAB=- is given,
 # grabbing images to disk is disabled.
 GRAB=
 
-# Use a LIRC remote control device. If set to 1, vdr uses /dev/lircd.
+# Use a LIRC remote control device. If set to 1, vdr uses /var/run/lirc/lircd.
 # If not set, or set to 0, don't use LIRC.
 LIRC=
 
@@ -158,9 +164,18 @@ NOKBD=
 # If not set, or set to 0, don't use rcu.
 RCU=
 
-# encode special characters in recording names to avoid problems 
+# encode special characters in recording names to avoid problems
 # with VFAT file systems
+# for backwards compatibility (same as DIRNAMES=250,40,1)
 VFAT=
+
+# DIRNAMES=PATH[,NAME[,ENC]]
+# set the maximum directory path length to PATH;
+# if NAME is also given, it defines the maximum directory name length;
+# the optional ENC can be 0 or 1, and controls whether special characters in
+# directory names are encoded as hex values (default: 0); if PATH or NAME are
+# left empty (as in ",,1" to only set ENC), the defaults apply
+DIRNAMES=
 
 # Allow coredumps if USER= is given (debugging)
 # USERDUMP="1"
@@ -186,7 +201,7 @@ RUNVDRPID=/var/run/runvdr.pid
 # Set the controlling terminal. For example, /dev/tty8
 TERMINAL="/dev/tty8"
 
-# Switch console to some terminal? Needs terminal number. 
+# Switch console to some terminal? Needs terminal number.
 # For example, SWITCHTERMINAL=8
 SWITCHTERMINAL=8
 
@@ -194,11 +209,11 @@ SWITCHTERMINAL=8
 # This affects sort options in recordings.
 # LANGUAGE="de_DE@euro"
 
-# Set character set that VDR shoud use
+# Set character set that VDR should use
 # VDR_CHARSET_OVERRIDE="ISO-8859-15"
 
-# If VDR restarts automatically, only do this number of restarts before giving up
-# Setting this to 0 will cancel any restart attempt of VDR
+# If VDR restarts automatically, only do this number of restarts before giving
+# up. Setting this to 0 will cancel any restart attempt of VDR
 MAXRESTARTS=5
 
 # Only count restart attempts where VDR did not run longer than # seconds
@@ -211,7 +226,7 @@ DVBUNLOADONEXIT=
 
 # Additional parameters to pass to VDR directly, without parsing:
 # Add them without extra quoting, like AddParams -a -b -c "Some Parameter"
-AddParams 
+AddParams
 
 # Command wrapper. Will be placed in front of the VDR command.
 # Example:

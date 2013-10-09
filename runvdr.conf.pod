@@ -1,0 +1,369 @@
+=for comment
+Compile me with:
+pod2man -s 5 -c runvdr -r runvdr runvdr.conf.pod | gzip > runvdr.conf.5.gz
+
+=head1 NAME
+
+runvdr.conf - Configuration file for runvdr-extreme
+
+=head1 SYNOPSIS
+
+ /etc/runvdr.conf
+
+=head1 DESCRIPTION
+
+The file B<runvdr.conf> configures the runvdr-extreme VDR startup script.
+
+=head1 OPTIONS
+
+ VDRPRG=
+
+=over 5
+
+The VDR binary to run
+
+=back
+
+ VIDEODIR=
+
+=over 5
+
+Use VIDEODIR as video directory.
+
+=back
+
+ CONFIGDIR=
+
+=over 5
+
+Read config files from directory CONFIGDIR
+
+=back
+
+ LOCALEDIR=
+
+=over 5
+
+Location of locale files for VDR.
+
+=back
+
+ LIBDIR=
+
+=over 5
+
+Search for plugins in directory LIBDIR.
+
+=back
+
+ CACHEDIR=
+
+=over 5
+
+Location where VDR and plugins save cache files
+
+=back
+
+ RESDIR=
+
+=over 5
+
+Location from where plugins read resource files
+
+=back
+
+ USER=
+
+=over 5
+
+Run as user VDRUSER in case vdr was started as user 'root'. Starting vdr as 'root' is necessary if the system time shall be set from the transponder data, but for security reasons vdr can switch to a lesser privileged user id during normal operation.
+
+=back
+
+ EPGFILE=
+
+=over 5
+
+Write the EPG data into EPGFILE. Use EPGFILE=- to disable this. If EPGFILE is a directory, the file epg.data will be created in that directory.
+
+=back
+
+ RECORDCMD=
+
+=over 5
+
+Call RECORDCMD before and after a recording.
+
+=back
+
+ SHUTDOWN=
+
+=over 5
+
+Call SHUTDOWN to shutdown the computer.
+
+=back
+
+ AUDIO=
+
+=over 5
+
+Send Dolby Digital audio to stdin of the command AUDIO
+
+=back
+
+ DVBDEVICE=()
+
+=over 5
+
+Use only the given DVB device. Set one or more DVB device numbers like this: (0 1 2). Defaults to all devices.
+
+=back
+
+ LOGLEVEL=
+
+=over 5
+
+Set logging to level. 0 = no logging, 1 = errors only, 2 = errors and info, 3 = errors, info and debug. The default logging level is 3. If logging should be done to LOG_LOCALn instead of LOG_USER, add '.n' to LEVEL, as in 3.7 (n=0..7).
+
+=back
+
+ MUTE=
+
+=over 5
+
+Mute audio of the primary DVB device at startup. Set to anything to mute, keep clear for not.
+
+=back
+
+ SVDRPPORT=
+
+=over 5
+
+Use SVDRPPORT port for SVDRP. A value of 0 turns off SVDRP. The default SVDRP port is 6419. You need to edit the file svdrphosts.conf in order to enable access to the SVDRP port.
+
+=back
+
+ WATCHDOG=
+
+=over 5
+
+Activate the watchdog timer with a timeout of sec seconds. A value of 0 (default) disables the watchdog.
+
+=back
+
+ DAEMON=
+
+=over 5
+
+Run in daemon mode (implies NOKBD=1). Set to anything to activate.
+
+=back
+
+ GRAB=
+
+=over 5
+
+Write images from the SVDRP command GRAB into the given directory. GRAB must be the full path name of an existing directory, without any "..", double '/' or symlinks. By default, or if GRAB=- is given, grabbing images to disk is disabled.
+
+=back
+
+ LIRC=
+
+=over 5
+
+Use a LIRC remote control device. If set to 1, vdr uses /var/run/lirc/lircd. If not set, or set to 0, don't use LIRC.
+
+=back
+
+ NOKBD=
+
+=over 5
+
+Don't use the keyboard as an input device. Set to anything.
+
+=back
+
+ VFAT=
+
+=over 5
+
+encode special characters in recording names to avoid problems with VFAT file systems
+for backwards compatibility (same as DIRNAMES=250,40,1)
+
+=back
+
+ DIRNAMES=PATH[,NAME[,ENC]]
+
+=over 5
+
+Set the maximum directory path length to PATH; if NAME is also given, it defines the maximum directory name length; the optional ENC can be 0 or 1, and controls whether special characters in directory names are encoded as hex values (default: 0); if PATH or NAME are left empty (as in ",,1" to only set ENC), the defaults apply
+
+=back
+
+ USERDUMP="1"
+
+=over 5
+
+Allow coredumps if USER= is given (debugging)
+
+=back
+
+ RUNVDRPID=/var/run/runvdr.pid
+
+=over 5
+
+Store PID of runvdr into a file?
+
+=back
+
+ TERMINAL=
+
+=over 5
+
+Set the controlling terminal. For example, /dev/tty8
+
+=back
+
+ SWITCHTERMINAL=
+
+=over 5
+
+Switch console to some terminal? Needs terminal number. For example, SWITCHTERMINAL=8
+
+=back
+
+ LANGUAGE="de_DE@euro"
+
+=over 5
+
+Set language for locale to run VDR on. This affects sort options in recordings.
+
+=back
+
+ VDR_CHARSET_OVERRIDE="ISO-8859-15"
+
+=over 5
+
+Set character set that VDR should use
+
+=back
+
+ MAXRESTARTS=
+
+=over 5
+
+If VDR restarts automatically, only do this number of restarts before giving up. Setting this to 0 will cancel any restart attempt of VDR. Default is 5.
+
+=back
+
+ RESTARTTIME=
+
+=over 5
+
+Only count restart attempts where VDR did not run longer than # seconds Setting this to 0 will never count restarts, and VDR can restart forever. Default is 10.
+
+=back
+
+ DVBUNLOADONEXIT=
+
+=over 5
+
+Should we unload the DVB driver when finally exiting runvdr? If not set, or set to 0, exit without unloading drivers
+
+=back
+
+ WRAPPER=
+
+=over 5
+
+Command wrapper. Will be placed in front of the VDR command.
+Example:
+ WRAPPER="gdb --args"
+ WRAPPER="valgrind"
+
+=back
+
+ TERMTIMEOUT=
+ KILLTIMEOUT=
+
+=over 5
+
+Timeouts for SIGTERM and SIGKILL when stopping VDR. TERMTIMEOUT defaults to 20 secods, KILLTIMEOUT to 5 seconds.
+
+=back
+
+=head1 PLUGIN LOADING
+
+ AddPlugin hello -b -a "A B C"
+
+=over 5
+
+The command "AddPlugin" is used to load a plugin, defined by the given options. The first word in options must be the name of an existing vdr plugin, optionally followed by a blank separated list of command line options for that plugin. If options contains any blanks, you need to enclose it in quotes, like for example
+
+=back
+
+=head1 X SERVER HANDLING
+
+ XSERVER="/usr/bin/X -nolisten tcp -config /etc/X11/xorg-runvdr.conf :0"
+
+=over 5
+
+Fire up own X server as output device
+
+=back
+
+ function XSTARTUP() {
+   while true ; do sleep 5; vdr-sxfe; done &
+   SXFEPID=$!
+ }
+
+=over 5
+
+X startup commands, called within the X server. Please not, that commands, entered here, are called with root privileges! Be sure to use "su $USER -c" where applicable.
+
+=back
+
+ function XSHUTDOWN() {
+   kill $SXFEPID
+ }
+
+=over 5
+
+X shutdown commands, called within the X server. Again, as with XSTARTUP, commands are executed with root privileges!
+
+=back
+
+=head1 DVB DRIVER LOADING/RELOADING
+
+ function DVBLOAD() {
+   modprobe ....
+ }
+
+=over 5
+
+Command to load the DVB drivers.
+DVBLOAD will be launched before VDR starts and whenever the drivers need to be reloaded.
+
+=back
+
+ function DVBUNLOAD() {
+   rmmod ....
+ }
+
+=over 5
+
+Command to unload the DVB drivers.
+DVBUNLOAD will be launched whenever the drivers need to be reloaded.
+
+=back
+
+=head1 ADDITIONAL PARAMETERS
+
+ AddParams --whatever --you --need
+
+=over 5
+
+Additional parameters to pass to VDR directly, without parsing: Add them without extra quoting, like AddParams -a -b -c "Some Parameter"
+
+=back

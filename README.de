@@ -1,9 +1,9 @@
-        
+
                        runvdr extreme
 
 
-Geschrieben von:          Udo Richter <udo_richter(a)gmx.de>
-Projekt Homepage:         http://www.udo-richter.de/vdr/scripts.html#runvdr
+Geschrieben von:       Udo Richter <udo_richter(a)gmx.de>
+Projekt Homepage:      http://projects.vdr-developer.org/projects/runvdr-extreme
 Siehe Datei COPYING für Lizenz-Informationen
 
 
@@ -26,7 +26,7 @@ Einige der Features von runvdr extreme:
 - Vermeidet endlose Schleifen, wenn VDR sofort stirbt
 - Setzt Terminal zurück nachdem VDR beendet wurde
 - Starten von Wrapper-Programmen zum Debuggen
-- Wartet bis der VDR-Prozess beendet wurde, 
+- Wartet bis der VDR-Prozess beendet wurde,
   hartes Beenden nach Timeout
 - Kommandozeilenhilfe
 - Kann Konsole umschalten
@@ -36,7 +36,7 @@ Einige der Features von runvdr extreme:
 
 Dazu kommt runvdr-conf.d:
 
-- Lädt Konfigurationsdateien alphabetisch aus einem Verzeichnis, 
+- Lädt Konfigurationsdateien alphabetisch aus einem Verzeichnis,
   vergleichbar mit init.d-Verzeichnissen.
 - Kommandozeilentool zum Aktivieren/Deaktivieren von Plugins
 - Festlegen der Ladereihenfolge
@@ -47,7 +47,7 @@ Dazu kommt runvdr-conf.d:
 Schnellstart
 --------------------------------------------------------------------------
 - Kopiere runvdr nach /usr/local/bin/ oder wo-auch-immer-du-magst
-- Kopiere runvdr.conf.example nach /etc/runvdr.conf, wenn runvdr als 
+- Kopiere runvdr.conf.example nach /etc/runvdr.conf, wenn runvdr als
   Server laufen soll, oder nach ~/.runvdr.conf, wenn runvdr durch
   einen Benutzer gestartet werden soll.
 - Bearbeite /etc/runvdr.conf nach deinem Bedarf
@@ -77,20 +77,20 @@ Die Optionen werden in dieser Reihenfolge ausgewertet:
 1. Kommandozeilenoptionen haben höchste Priorität.
 2. runvdr.conf auf Kommandozeile mit -C oder --runvdr-conf angegeben
 3. Wenn kein -C und kein --runvdr-conf angegeben, benutze ~/.runvdr.conf
-4. Wenn kein -C und kein --runvdr-conf und kein ~/.runvdr.conf, benutze 
+4. Wenn kein -C und kein --runvdr-conf und kein ~/.runvdr.conf, benutze
    /etc/runvdr.conf
 5. Wenn keine der obigen Dateien existiert, benutze runvdr-Defaults
 
 Nur eine runvdr.conf wird normalerweise geladen, und nur eine -C Option
 wird ausgewertet. Man kann aber den Inhalt einer runvdr.conf in einer anderen
-runvdr.conf laden, wenn man die INCLUDE-Direktive verwendet. Man kann zum 
-Beispiel /etc/runvdr.conf aus der Datei ~/.runvdr.conf heraus laden, um 
+runvdr.conf laden, wenn man die INCLUDE-Direktive verwendet. Man kann zum
+Beispiel /etc/runvdr.conf aus der Datei ~/.runvdr.conf heraus laden, um
 für den aktuellen Benutzer einige Einstellungen zu überschreiben.
 
 Die INCLUDE-Direktive kann auch mehrere Konfigurationsdateien laden. So kann
 man z.B. mit INCLUDE /etc/runvdr/conf.d/* ein ganzes Verzeichnis von
 Konfigurationsdateien laden. Beispielsweise könnten in so einem Verzeichnis
-für jedes zu ladende Plugin eine Datei (oder Symlink) mit dem Einzeiler 
+für jedes zu ladende Plugin eine Datei (oder Symlink) mit dem Einzeiler
 "AddPlugin xxx" liegen.
 
 Plugins, die durch die AddPlugin-Direktive in der conf-Datei oder die
@@ -98,12 +98,12 @@ Plugins, die durch die AddPlugin-Direktive in der conf-Datei oder die
 entfernt werden, wenn man "AddPlugin -name", --plugin="-name" oder -P-name
 verwendet. Der name-Teil wird dabei als Muster für den Anfangsteil des Plugin-
 Namens verwendet, alle Plugins, die auf "name*" passen, werden entfernt.
-Insbesondere hebt "AddPlugin -" und -P- die gesamte bisherige Plugin-Liste 
+Insbesondere hebt "AddPlugin -" und -P- die gesamte bisherige Plugin-Liste
 auf. Der selbe Mechanismus funktioniert auch beim -D Device-Parameter.
 
-Um Parameter an VDR direkt weiter zu geben, ohne dass runvdr sie 
-interpretiert, kann -- als Parameter angegeben werden. Alle Parameter nach 
--- werden unverändert an VDR weiter gegeben. So gibt "runvdr -- --help" 
+Um Parameter an VDR direkt weiter zu geben, ohne dass runvdr sie
+interpretiert, kann -- als Parameter angegeben werden. Alle Parameter nach
+-- werden unverändert an VDR weiter gegeben. So gibt "runvdr -- --help"
 die Hilfestellung von VDR aus, und nicht die Hilfestellung von runvdr.
 
 
@@ -111,7 +111,7 @@ die Hilfestellung von VDR aus, und nicht die Hilfestellung von runvdr.
 runvdr-conf.d
 --------------------------------------------------------------------------
 
-Mit runvdr-conf.d steht ein (optionales) Tool zur Verfügung, das das 
+Mit runvdr-conf.d steht ein (optionales) Tool zur Verfügung, das das
 Verwalten der Plugins erleichtern soll. Es funktioniert nach dem init.d
 Prinzip, bei dem in einem Verzeichnis mehrere symbolische Links auf Dateien
 abgelegt werden, die in alphabetischer Reihenfolge abgearbeitet werden.
@@ -119,13 +119,13 @@ abgelegt werden, die in alphabetischer Reihenfolge abgearbeitet werden.
 Im Falle von runvdr-conf.d legt man pro zu ladendem Plugin eine eigene
 Konfigurationsdatei nach Vorbild der skeleton.example in /etc/runvdr/ ab.
 Geladen werden Plugins, deren symbolischer Link unter /etc/runvdr/conf.d
-liegt. Dazu muss in der runvdr.conf die passende INCLUDE-Zeile aktiviert 
+liegt. Dazu muss in der runvdr.conf die passende INCLUDE-Zeile aktiviert
 werden.
 
 Folgende Befehle stehen zur Verfügung, um die aktiven Plugins zu verwalten:
 
 runvdr-conf.d show [name]
-  Zeigt alle Plugins bzw. ein Plugin an, inklusive Name und Ladepriorität. 
+  Zeigt alle Plugins bzw. ein Plugin an, inklusive Name und Ladepriorität.
   'name' ist der Dateiname im Verzeichnis /etc/runvdr/.
 
 runvdr-conf.d enable name [--prio XX]
@@ -141,7 +141,7 @@ runvdr-conf.d osdserver [--debug]
   Verbindet mit OSD-Server Plugin und erlaubt das Konfigurieren der Plugins
   per VDR OSD. Von dort können Plugins aktiviert und deaktivert werden, und
   die Ladepriorität gesetzt werden.
-  Ohne --debug kehrt runvdr-conf.d sofort zurück und trennt sich von der 
+  Ohne --debug kehrt runvdr-conf.d sofort zurück und trennt sich von der
   Standard-Ein/Ausgabe, kann also von der commands.conf direkt aufgerufen
   werden. Mit --debug wird die OSD-Server Kommunikation ausgegeben.
 
@@ -154,12 +154,10 @@ Unix-Kommandos, die runvdr benutzt:
 Kommando      Debian-Paket
  pgrep         procps
  ps            procps
- kill          procps
  sleep         coreutils
  date          coreutils
  chvt          console-tools
  getopt        util-linux
- setterm       util-linux
 
 
 
@@ -213,12 +211,11 @@ Lade alle Plugins, aber nicht das hello-Plugin:
 Starte einen Testlauf von runvdr, um zu sehen was passiert:
 
   runvdr --wrapper=echo
-  
+
 Starte eine Debugging-Session:
 
   runvdr --wrapper="gdb --args"
-  
+
 Starte mit einer komplett abweichenden Konfiguration:
 
   runvdr --runvdr-conf="/etc/runvdr-debugging.conf"
-
