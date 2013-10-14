@@ -81,6 +81,11 @@ Die Optionen werden in dieser Reihenfolge ausgewertet:
    /etc/runvdr.conf
 5. Wenn keine der obigen Dateien existiert, benutze runvdr-Defaults
 
+Der Standard-Name der Konfigurationsdatei wird gebildet aus dem Namen der
+Applikation und dem Anhang ".conf". So kann man auf einfache Weise, ohne ständig
+den -C Parameter angeben zu müssen, mehrere Konfigurationsdateien nutzen,
+indem Symlinks auf runvdr erzeugt werden.
+
 Nur eine runvdr.conf wird normalerweise geladen, und nur eine -C Option
 wird ausgewertet. Man kann aber den Inhalt einer runvdr.conf in einer anderen
 runvdr.conf laden, wenn man die INCLUDE-Direktive verwendet. Man kann zum

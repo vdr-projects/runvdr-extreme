@@ -78,6 +78,11 @@ Options take this precedence:
 4. If no -C and no --runvdr-conf and no ~/.runvdr.conf, use /etc/runvdr.conf
 5. If none of the above, runvdr built-in defaults are used.
 
+The default name of the config file is generated from the executable filename
+suffixed by ".conf". So you may have easy access to different config files,
+without having to use the -C parameter every time, by creating symlinks to
+runvdr.
+
 Only one of the runvdr.conf files is loaded by default, and only one -C
 option is evaluated. However, you can load the contents of another runvdr.conf
 file from a runvdr.conf by using the INCLUDE directive. For example, you can
