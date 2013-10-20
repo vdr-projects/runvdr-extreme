@@ -1,7 +1,7 @@
 runvdr extreme Revision History
 -------------------------------
 
-201x-xx-xx: Version 0.5.0
+2013-10-20: Version 0.5.0
 - New: If VDRPRG is not given, runvdr-extreme defaults to "vdr" in $PATH
 - New: Support for --dirnames, --cachedir and --resdir
 - New: Documentation for runvdr.conf in POD format. See the first lines of
