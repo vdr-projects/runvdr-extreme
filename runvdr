@@ -49,7 +49,6 @@ DATE="date"
 # --vdr=#                VDRPRG           location and name of the vdr binary
 # --switchterminal=#     SWITCHTERMINAL   console terminal to switch to
 # --xserver=#            XSERVER          start X server for VDR
-# --xserver-proxy=#                       runvdr internal use only
 # --runvdr-pid=#         RUNVDRPID        location of runvdr.pid file
 # --dvb-load=#           DVBLOAD          command to load DVB drivers
 # --dvb-unload=#         DVBUNLOAD        command to unload DVB drivers
@@ -113,10 +112,10 @@ which $DATE      >/dev/null || { echo missing $DATE... >&2 ;    exit 1 ; }
 function ParseCommandLine_Step1() {
     # Parse command line, step 1
     # Stores pre-processed options in $OPTIONS
-    # evaluates -C, --runvdr-conf and --xserver-proxy only
+    # evaluates -C, and --runvdr-conf only
 
     SHORTOPT="a:c:C:dD:E:g:hi:l:L:mp:P:r:s:t:u:v:Vw:"
-    LONGOPT="runvdr-conf:,xserver-proxy:,pluginsetup-conf:,setupplugin-conf:,vdr:,\
+    LONGOPT="runvdr-conf:,pluginsetup-conf:,setupplugin-conf:,vdr:,\
         switchterminal:,maxrestarts:,restarttime:,xserver:,\
         runvdr-pid:,dvb-load:,dvb-unload:,dvb-unload-on-exit,x-startup:,\
         x-shutdown:,language:,charset-override:,wrapper:,\
@@ -130,10 +129,8 @@ function ParseCommandLine_Step1() {
 
     eval set -- "$OPTIONS"
 
-    XSERVERPROXY=
     while true ; do case "$1" in
         -C|--runvdr-conf)  RUNVDRCONF="$2";  shift 2;;
-           --xserver-proxy) XSERVERPROXY="$2"; shift 2;;
            --pluginsetup-conf)               shift 2;;
            --setupplugin-conf)               shift 2;;
            --vdr)                            shift 2;;
@@ -393,7 +390,6 @@ function ParseCommandLine_Step2() {
 
     while true ; do case "$1" in
         -C|--runvdr-conf)                    shift 2;;
-           --xserver-proxy)                  shift 2;;
            --pluginsetup-conf) PLUGINSETUPCONF="$2"; shift 2;;
            --setupplugin-conf) SETUPPLUGINCONF="$2"; shift 2;;
            --vdr)          VDRPRG="$2";      shift 2;;
@@ -681,6 +677,52 @@ function WaitKill() {
     echo failed.
 }
 
+# Helper functions to handle X server
+
+function StartXServer() {
+    XSERVERPID=
+
+    if [ -n "$XSERVER" ] ; then
+        # X server sends "SIGUSR1" to its parent process, when ready to accept
+        # connections, if the signal is ignored by the child process.
+        # (See man Xserver).
+        (
+            trap "" USR1
+            exec $XSERVER
+        ) &
+        XSERVERPID=$!
+
+        # Wait for X to end or for signal to arrive
+        SIG=
+        wait $XSERVERPID
+
+        # If anything works as expected, we should have received SIGUSR1.
+        if [ "$SIG" != "USR1" ]; then
+            echo "Xserver startup failed with exit code $?!" >&2
+            exit 1
+        fi
+
+        # Export DISPLAY
+        export DISPLAY=":0"
+        if [[ "$XSERVER" =~ \ (:[0-9.]+) ]]; then
+            DISPLAY="${BASH_REMATCH[1]}"
+        fi
+
+        # X startup command
+        Do_XSTARTUP
+    fi
+}
+
+function StopXServer() {
+    if [ -n "$XSERVERPID" ] ; then
+        # X shutdown command
+        Do_XSHUTDOWN
+
+        # Get sure X server is down
+        WaitKill $XSERVERPID ${XSERVER%% *} $TERMTIMEOUT $KILLTIMEOUT
+    fi
+}
+
 # Helper functions for callbacks
 
 function Do_DVBLOAD() {
@@ -725,22 +767,6 @@ function Do_XSHUTDOWN() {
 
 # Parse command line, step 1
 ParseCommandLine_Step1 "$@" || exit 1
-
-# Act as a proxy for calling VDR, from within X session
-if [ -n "$XSERVERPROXY" ] ; then
-    # X startup command
-    Do_XSTARTUP
-    # Unpack proxy command line
-    eval "VDRCOMMAND=($VDRCOMMANDPROXY)"
-    "${VDRCOMMAND[@]}" &
-    PID=$!
-    echo "PID $PID" > "$XSERVERPROXY"
-    wait $PID
-    echo "RET $?" >> "$XSERVERPROXY"
-    # X shutdown command
-    Do_XSHUTDOWN
-    exit 0
-fi
 
 # Clean variables
 Clean
@@ -844,9 +870,6 @@ Do_DVBLOAD
 # Count how often VDR terminated very quickly
 SHORTRUNTIMES=0
 
-# Initialize for now
-PROXYFILE=
-
 while (true) do
     echo -n "Starting VDR at " ; $DATE
 
@@ -858,65 +881,26 @@ while (true) do
     trap "SIG=USR1" SIGUSR1
     trap "SIG=USR2" SIGUSR2
 
-    # clean up signal variable
-    SIG=
-
     # Remember start time
     STARTTIME=`$DATE +%s`
 
     echo "${VDRCOMMAND[@]}"
 
-    if [ -z "$XSERVER" ] ; then
-        # Run VDR
-        "${VDRCOMMAND[@]}" &
+    # Run X server
+    StartXServer
 
-        # Remember PID of VDR process
-        PID=$!
+    # Run VDR
+    "${VDRCOMMAND[@]}" &
 
-        # no X server PID
-        XSERVERPID=
+    # Remember PID of VDR process
+    PID=$!
 
-        # Wait for VDR to end or signal to arrive
-        wait $PID
+    # Wait for VDR to end or signal to arrive
+    SIG=
+    wait $PID
 
-        # Remember return value of VDR
-        RET=$?
-    else
-        # Run X server that runs VDR
-        PROXYFILE="/tmp/runvdr-$$"
-        [ -f "$PROXYFILE" ] && rm "$PROXYFILE"
-
-        # Pack command array into single env string:
-        export VDRCOMMANDPROXY=`printf '%q ' "${VDRCOMMAND[@]}"`
-        export XSTARTUP
-        export XSHUTDOWN
-        [ "`type -t XSTARTUP`" = "function" ] && export -f XSTARTUP
-        [ "`type -t XSHUTDOWN`" = "function" ] && export -f XSHUTDOWN
-
-        # Fire up X server that calls back runvdr, and run into XSERVERPROXY there
-        eval "xinit \""$0"\" --xserver-proxy=\""$PROXYFILE"\" -- $XSERVER &"
-
-        # Remember X server PID
-        XSERVERPID=$!
-
-        # ... also temporary as VDR PID
-        PID=$XSERVERPID
-
-        # Wait for VDR to end or signal to arrive
-        wait $XSERVERPID
-
-        # No known return of VDR yet
-        RET=0
-    fi
-
-    # If proxy, read proxy return values
-    if [ -n "$PROXYFILE" ] ; then
-        while read var arg ; do case "$var" in
-            PID) PID="$arg";;
-            RET) RET="$arg";;
-        esac ; done < "$PROXYFILE"
-        rm "$PROXYFILE"
-    fi
+    # Remember return value of VDR
+    RET=$?
 
     # Remember stop time
     STOPTIME=`$DATE +%s`
@@ -936,8 +920,8 @@ while (true) do
         # Kill remaining VDR traces
         WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
 
-        # Wait for X server to be down too
-        [ "$XSERVERPID" ] && wait "$XSERVERPID"
+        # Stop X server
+        StopXServer
 
         # Unload DVB drivers requested?
         [ -n "$DVBUNLOADONEXIT" ] && Do_DVBUNLOAD
@@ -951,8 +935,8 @@ while (true) do
         # Kill remaining VDR traces
         WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
 
-        # Wait for X server to be down too
-        [ "$XSERVERPID" ] && wait "$XSERVERPID"
+        # Stop X server
+        StopXServer
 
         # and loop
         ;;
@@ -962,8 +946,8 @@ while (true) do
         # Kill remaining VDR traces
         WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
 
-        # Wait for X server to be down too
-        [ "$XSERVERPID" ] && wait "$XSERVERPID"
+        # Stop X server
+        StopXServer
 
         # reload DVB stuff
         Do_DVBUNLOAD
@@ -976,8 +960,8 @@ while (true) do
             # Kill remaining VDR traces
             WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
 
-            # Wait for X server to be down too
-            [ "$XSERVERPID" ] && wait "$XSERVERPID"
+            # Stop X server
+            StopXServer
 
             # Unload DVB drivers requested?
             [ -n "$DVBUNLOADONEXIT" ] && Do_DVBUNLOAD
@@ -991,8 +975,8 @@ while (true) do
             # Kill remaining VDR traces
             WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
 
-            # Wait for X server to be down too
-            [ "$XSERVERPID" ] && wait "$XSERVERPID"
+            # Stop X server
+            StopXServer
 
             # Unload DVB drivers requested?
             [ -n "$DVBUNLOADONEXIT" ] && Do_DVBUNLOAD
@@ -1005,8 +989,8 @@ while (true) do
         # Kill remaining VDR traces
         WaitKill $PID $VDRPRG $TERMTIMEOUT $KILLTIMEOUT
 
-        # Wait for X server to be down too
-        [ "$XSERVERPID" ] && wait "$XSERVERPID"
+        # Stop X server
+        StopXServer
 
         # reload DVB
         Do_DVBUNLOAD
@@ -1032,6 +1016,3 @@ done
 
 # Clean up PID file
 [ -n "$RUNVDRPID" ] && rm $RUNVDRPID 2>/dev/null
-
-# Clean up proxy file, if used
-[ -n "$PROXYFILE" ] && rm $PROXYFILE 2>/dev/null
