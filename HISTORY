@@ -5,6 +5,8 @@ XXXX-XX-XX: Version X.X.X
 - New: Replaced xinit with own, builtin, X server handling.
   Note: Please be sure to have the "-noreset" parameter in your "XSERVER"
   command line or the detach feature of softhddevice will fail.
+- New: Now it is possible to set "XSERVER" to "1" to get the X server started
+  with recommended default parameters. Thanks to Copperhead for the hint.
 
 2013-10-20: Version 0.5.0
 - New: If VDRPRG is not given, runvdr-extreme defaults to "vdr" in $PATH

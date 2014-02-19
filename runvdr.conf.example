@@ -180,10 +180,12 @@ DIRNAMES=
 # Allow coredumps if USER= is given (debugging)
 # USERDUMP="1"
 
-# Fire up own X server as output device
+# Fire up own X server as output device using recommended default parameters
+# XSERVER="1"
+# You may also set your own X startup command like this:
+# XSERVER="/usr/bin/X -nolisten tcp -config /etc/X11/xorg-runvdr.conf -noreset"
 # Note: You need the "-noreset" parameter if you want to use the "detach"
 # feature of the softhddevice output plugin
-# XSERVER="/usr/bin/X -nolisten tcp -config /etc/X11/xorg-runvdr.conf -noreset :0"
 
 # X startup commands, called within the X server
 #function XSTARTUP() {

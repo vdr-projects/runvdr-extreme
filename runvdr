@@ -696,7 +696,7 @@ function StartXServer() {
         SIG=
         wait $XSERVERPID
 
-        # If anything works as expected, we should have received SIGUSR1.
+        # If everything works as expected, we should have received SIGUSR1.
         if [ "$SIG" != "USR1" ]; then
             echo "Xserver startup failed with exit code $?!" >&2
             exit 1
@@ -837,6 +837,9 @@ if [ "$DVBRESTART" != "0" ] ; then
     fi
     exit 0
 fi
+
+# Set default X server command if user set "XSERVER" to "1"
+[ "$XSERVER" == "1" ] && XSERVER="/usr/bin/X -nolisten tcp -noreset"
 
 
 # Build up VDR command

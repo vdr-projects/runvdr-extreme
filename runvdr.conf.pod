@@ -305,11 +305,15 @@ The command "AddPlugin" is used to load a plugin, defined by the given options. 
 
 =head1 X SERVER HANDLING
 
- XSERVER="/usr/bin/X -nolisten tcp -config /etc/X11/xorg-runvdr.conf -noreset :0"
+ XSERVER="1"
 
 =over 5
 
-Fire up own X server as output device
+Fire up own X server as output device using recommended default parameters.
+
+You may also set your own X startup command like this:
+
+XSERVER="/usr/bin/X -nolisten tcp -config /etc/X11/xorg-runvdr.conf -noreset"
 
 Note: You need the "-noreset" parameter if you want to use the "detach"
 feature of the softhddevice output plugin
@@ -323,7 +327,7 @@ feature of the softhddevice output plugin
 
 =over 5
 
-X startup commands, called within the X server. Please not, that commands, entered here, are called with root privileges! Be sure to use "su $USER -c" where applicable.
+X startup commands, called within the X server. Please note, that commands, entered here, are called with root privileges! Be sure to use "su $USER -c" where applicable.
 
 =back
 
