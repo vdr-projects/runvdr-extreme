@@ -181,7 +181,9 @@ DIRNAMES=
 # USERDUMP="1"
 
 # Fire up own X server as output device
-# XSERVER="/usr/bin/X -nolisten tcp -config /etc/X11/xorg-runvdr.conf :0"
+# Note: You need the "-noreset" parameter if you want to use the "detach"
+# feature of the softhddevice output plugin
+# XSERVER="/usr/bin/X -nolisten tcp -config /etc/X11/xorg-runvdr.conf -noreset :0"
 
 # X startup commands, called within the X server
 #function XSTARTUP() {
